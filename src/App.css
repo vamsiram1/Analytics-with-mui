@@ -1,0 +1,35 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100;200;300;400;500;600;700;800&display=swap");
+
+.whole_container {
+  background-color: #f6f8f9;
+}
+
+.sidebar {
+  width: 15vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background-color: lightblue;
+  z-index: 1;
+}
+
+.main_content {
+  max-width: calc(100vw - 15vw);
+  padding: 15px;
+  box-sizing: border-box;
+  margin-left: 15vw;
+  margin-top: 68px;
+}
+
+.analytics_wrapper {
+  display: flex;
+  margin-top: 10px;
+  gap: 15px;
+  width: 100%;
+}
+
+.prev_years_graphs_section {
+  width: 30%;
+  /* border:1px solid red */
+}

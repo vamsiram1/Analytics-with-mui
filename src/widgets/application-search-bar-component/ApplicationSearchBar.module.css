@@ -1,0 +1,18 @@
+.search_bar {
+  display: flex;
+  width: 25%;
+  padding: 8px 15px;
+  align-items: center;
+  gap: 10px;
+  background-color: #ffff;
+  border-radius:25px;
+}
+
+.search_application_input{
+    flex:1;
+    border:none;
+    outline:none;
+    font-size: 16px;
+}
+
+

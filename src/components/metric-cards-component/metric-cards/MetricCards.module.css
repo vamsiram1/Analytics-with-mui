@@ -1,0 +1,74 @@
+.metric_cards_container {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+  gap: 20px;
+  /* padding: 20px; */
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.metric_card {
+  padding: 10px;
+  gap:7px;
+  border-radius:5px;
+}
+.metric_card_values {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border: none;
+}
+.percentage_number_box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  height: 23px;
+  width: 60px;
+  display: flex;
+  justify-content: center;
+  border: 1px solid green;
+  padding: 1px;
+  border-radius: 25px;
+}
+
+.card_value {
+  font-size: 25px;
+}
+
+.card_state{
+  margin-top:20px;
+}
+
+.card_red {
+  background-color: #fff6f6;
+}
+
+.card_green {
+  background-color: #f9fff4;
+}
+
+.card_percentage_text {
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+  font-family:"Plus Jakarta Sans" ;
+}
+
+
+.green_text {
+  color: #22c55e;
+}
+
+.red_text {
+  color: #ef4444;
+}
+
+.percentage_box_border_red {
+  border-color: #ef4444;
+}
+
+.percentage_box_border_green {
+  border-color: #22c55e;
+}

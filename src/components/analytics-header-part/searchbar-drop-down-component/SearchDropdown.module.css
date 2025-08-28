@@ -1,0 +1,37 @@
+.search_dropdown_wrapper {
+  padding: 15px;
+  background-color: #ffffff;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #dcdcdc;
+  position: absolute;
+  /* top: 100%; */
+  left: 0;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+.zone_tab {
+  text-transform: capitalize;
+  border-radius: 10px;
+  color: #616161;
+  font-size: 16px;
+}
+
+.dgm_tab {
+  border-radius: 10px;
+  color: #616161;
+  font-size: 16px;
+}
+
+.campus_tab {
+  text-transform: capitalize;
+  border-radius: 10px;
+  color: #616161;
+  font-size: 16px;
+}
+
+
+.zone_name_dropdown{
+  width:100%;
+}
