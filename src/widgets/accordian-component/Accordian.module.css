@@ -1,0 +1,9 @@
+.title_header{
+    display:flex;
+    flex-direction: row;
+    gap:5px;
+}
+
+
+
+

@@ -39,11 +39,15 @@ const ZoneNameDropdown = () => {
           sx={{
             marginTop: 1,
             borderRadius: 2,
-            height: 43,
+            height: 41,
             fontSize: 14,
 
             "& .MuiSelect-select": {
               padding: "8px 14px",
+            },
+
+            "& .MuiSelect-root .MuiInputBase-root .MuiInputBase-colorPrimary":{
+              display:"none",
             },
           }}
           MenuProps={{

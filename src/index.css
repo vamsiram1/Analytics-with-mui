@@ -30,5 +30,8 @@ html p{
 }
 
 
-
+figure{
+  margin:0;
+  padding:0;
+}
 

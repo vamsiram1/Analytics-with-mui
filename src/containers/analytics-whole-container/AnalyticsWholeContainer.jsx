@@ -1,12 +1,9 @@
-import React from "react";
-import AnalyticsHeaderContainer from "../analytics-header-container/AnalyticsHeaderContainer";
 import MetricCards from "../../components/metric-cards-component/metric-cards/MetricCards";
+import Accordian from "../../widgets/accordian-component/Accordian";
+import AccordiansContainer from "../accordians-container/AccordiansContainer";
+import AnalyticsHeaderContainer from "../analytics-header-container/AnalyticsHeaderContainer";
 import ZoneRateContainer from "../zone-rate-container/ZoneRateContainer";
-import styles from "./AnalyticsWholeContainer.module.css"
-
-import CampusGraph from "../../components/graphs-components/CampusGraph";
-import DgmGraph from "../../components/graphs-components/DgmGraph";
-import ZoneGraph from "../../components/graphs-components/ZoneGraph";
+import styles from "./AnalyticsWholeContainer.module.css";
 const AnalyticsWholeContainer = () => {
   return (
     <>
@@ -17,10 +14,9 @@ const AnalyticsWholeContainer = () => {
       </div>
 
       <div className={styles.prev_years_graphs_section}> 
+
+        <AccordiansContainer />
         
-        <CampusGraph/>
-        <DgmGraph/>
-        <ZoneGraph/>
         
       </div>
     </>
