@@ -31,15 +31,15 @@ const ZoneNameDropdown = () => {
 
   return (
     <div id="zone_name_dropddown">
-      <label>Zone Name</label>
+      <label className={styles.dropdow_label_text}>Zone Name</label>
       <FormControl fullWidth>
         <Select
           displayEmpty
           IconComponent={myArrow}
           sx={{
-            marginTop: 1,
+            marginTop: 0.5,
             borderRadius: 2,
-            height: 41,
+            height: 40,
             fontSize: 14,
 
             "& .MuiSelect-select": {

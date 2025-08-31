@@ -83,7 +83,7 @@ const AnalyticsHeader = () => {
   return (
     <div className={styles.analytics_header_and_search_bar} ref={wrapperRef}>
       <div className={styles.analytics_header}>
-        <ApplicationSearchHeaderIcon height="40" width="40" />
+        <ApplicationSearchHeaderIcon height="44" width="44" />
         <div>
           <h3 className={styles.analytics_heading}>Application Analytics</h3>
           <p className={styles.analytics_header_text_para}>

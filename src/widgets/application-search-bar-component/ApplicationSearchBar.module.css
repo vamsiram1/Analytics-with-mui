@@ -1,15 +1,17 @@
 .search_bar {
   display: flex;
-  width: 25%;
-  padding: 8px 15px;
-  align-items: center;
-  gap: 10px;
-  background-color: #ffff;
-  border-radius:25px;
+display: flex;
+width: 23%;
+padding: 10px 90px 10px 9px;
+align-items: center;
+gap: 10px;
+border-radius: 31px;
+border: 1px solid #DCDCDC;
+background: #FFF;
 }
 
 .search_application_input{
-    flex:1;
+    
     border:none;
     outline:none;
     font-size: 16px;

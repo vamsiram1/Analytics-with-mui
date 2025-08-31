@@ -7,11 +7,11 @@ import AnalyticsWholeContainer from "../analytics-whole-container/AnalyticsWhole
 
 const ApplicationNavLinksContainer = () => {
   return (
-    <div id="nav_links_container" className={styles.nav_links_container}>
+    
       <ApplicationNavLinks />
 
       
-    </div>
+    
   );
 };
 

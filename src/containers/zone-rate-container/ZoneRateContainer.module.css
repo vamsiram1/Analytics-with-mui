@@ -1,7 +1,7 @@
 .zones_rates_container{
     width:100%;
     display:flex;
-    gap:50px;
+    gap:45px;
     justify-content: space-between;
     align-items: center;
 }

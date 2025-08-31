@@ -31,7 +31,7 @@ const PercentBox = ({ items = [] }) => (
             padding: "4px 8px",
             borderRadius: 20,
             letterrSpacing:"0.2px",
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: 500,
             display: "inline-flex",
             alignItems: "center",

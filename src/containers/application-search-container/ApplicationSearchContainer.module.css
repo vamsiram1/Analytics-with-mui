@@ -4,8 +4,11 @@
   background-position: left;
   background-repeat: no-repeat;
   max-width:100%;
-  padding: 15px;
+  padding: 22px 15px;
   border-radius: 10px;
   border: 1px solid #ddd;
+  display:flex;
+  flex-direction: column;
+  gap:10px;
   
 }

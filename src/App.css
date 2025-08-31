@@ -5,7 +5,7 @@
 }
 
 .sidebar {
-  width: 15vw;
+  width: 240px;
   position: fixed;
   top: 0;
   left: 0;
@@ -15,11 +15,11 @@
 }
 
 .main_content {
-  max-width: calc(100vw - 15vw);
-  padding: 15px;
+  /* max-width: calc(100vw - 15vw); */
+  padding: 10px;
   box-sizing: border-box;
-  margin-left: 15vw;
-  margin-top: 68px;
+  margin-left: 240px;
+  margin-top: 54px;
 }
 
 .analytics_wrapper {
@@ -27,6 +27,7 @@
   margin-top: 10px;
   gap: 15px;
   width: 100%;
+  
 }
 
 .prev_years_graphs_section {
