@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import profileimg from "../../assets/profileimg.png";
+import profileimg from "../../assets/profile_img.png";
 import styles from "./UserInfoComponent.module.css";
 
 const UserInfoComponent = () => {

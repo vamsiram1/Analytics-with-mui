@@ -9,11 +9,13 @@
   border-radius: 8px;
   border: 1px solid #EBECEF;
   background: #FAFAFA;
-  padding: 8px 14px;
+  padding: 4px 14px;
   width: 60%;
 }
 
 .search_icon {
+  display:flex;
+  align-items: center;
   width: 17px;
   height: 17px;
 }

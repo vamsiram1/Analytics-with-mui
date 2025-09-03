@@ -1,8 +1,8 @@
 .search_bar {
   display: flex;
 display: flex;
-width: 23%;
-padding: 10px 90px 10px 9px;
+width: 22%;
+padding: 7px 85px 10px 12px;
 align-items: center;
 gap: 10px;
 border-radius: 31px;

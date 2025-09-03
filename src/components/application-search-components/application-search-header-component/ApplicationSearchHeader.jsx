@@ -1,7 +1,7 @@
 import React from "react";
 import ApplicationSearchHeaderIcon from "../../../assets/ApplicationSearchHeaderIcon";
 import styles from "../application-search-header-component/ApplicationSearchHeader.module.css";
-import blueLine from "../../../assets/blue-arrow-line.png"
+import blueLine from "../../../assets/blue_arrow_line.png"
 
 const ApplicationSearchHeader = () => {
   return (

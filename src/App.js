@@ -5,6 +5,7 @@ import ApplicationSearchContainer from "./containers/application-search-containe
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Header from "./components/HeaderComponents/Header";
 import AnalyticsWholeContainer from "./containers/analytics-whole-container/AnalyticsWholeContainer";
+import SideBarContainer from "./containers/SideBar-container/SideBarContainer";
 
 const AnalyticsTab = () => <div>Analytics content</div>;
 const DistributeTab = () => <div>Distribute content</div>;
@@ -16,7 +17,9 @@ function App() {
       <div className="whole_container">
         <Header />
 
-        <aside className="sidebar"></aside>
+        <aside >
+          <SideBarContainer/>
+        </aside>
 
         <div className="main_content">
           <ApplicationSearchContainer />

@@ -1,11 +1,11 @@
 import React from "react";
-import { cards } from "../metric-cards/MetricCardsObject";
+import { cardsData } from "../metric-cards/MetricsApis";
 import styles from "../metric-cards/MetricCards.module.css";
 
 const MetricCards = () => {
   return (
     <div className={styles.metric_cards_container}>
-      {cards.map((card) => {
+      {cardsData.map((card) => {
         const cardColor =
           card.percentage > 0 ? styles.card_green : styles.card_red;
         const percentageColor =
@@ -17,13 +17,10 @@ const MetricCards = () => {
         const arrowDirection =
           card.percentage > 0
             ? "M2.08337 4.66667L5.00004 1.75M5.00004 1.75L7.91671 4.66667M5.00004 1.75V9.25"
-            : "M7.91671 6.33333L5.00004 9.25M5.00004 9.25L2.08337 6.33333M5.00004 9.25V1.75"; 
+            : "M7.91671 6.33333L5.00004 9.25M5.00004 9.25L2.08337 6.33333M5.00004 9.25V1.75";
 
         return (
-          <div
-            className={` ${styles.metric_card} ${cardColor}`}
-            key={card.id}
-          >
+          <div className={` ${styles.metric_card} ${cardColor}`} key={card.id}>
             <div className={styles.metric_card_values}>
               <strong className={styles.card_value}>{card.value}</strong>
 

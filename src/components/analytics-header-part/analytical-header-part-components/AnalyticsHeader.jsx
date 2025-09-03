@@ -47,7 +47,7 @@ const AnalyticsHeader = () => {
     // Filter (case-insensitive)
     const filtered = items.filter((it) => it.name.toLowerCase().includes(q));
 
-    // De-duplicate by EXACT original string
+    // De-duplicate by exact original string
     const seen = new Set();
     const unique = [];
     for (const it of filtered) {
@@ -66,13 +66,7 @@ const AnalyticsHeader = () => {
   useEffect(() => {
     function handleOutside(e) {
       const clickedInsideWrapper = wrapperRef.current?.contains(e.target);
-      const clickedInMuiPortal = !!(
-        e.target.closest(".MuiPopover-root") ||
-        e.target.closest(".MuiMenu-root") ||
-        e.target.closest(".MuiModal-root")||
-        e.target.closest(".MuiFormControl-root")
-      );
-      if (clickedInsideWrapper || clickedInMuiPortal) return;
+      if (clickedInsideWrapper) return;
       setShowSearchDropdown(false);
       setShowSuggestions(false);
     }

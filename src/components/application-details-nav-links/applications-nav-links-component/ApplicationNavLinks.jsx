@@ -13,11 +13,11 @@ const ApplicationNavLinks = () => {
 
   return (
     <ul className={styles.all_nav_tabs}>
-      {tabs.map((tab, index) => {
+      {tabs.map((tab) => {
         const isActive = location.pathname.includes(tab.path); // Check if the tab is active
         return (
           <li
-            key={index}
+            key={tab.label}
             className={`${styles.nav_tabs} ${isActive ? styles.active_tab : ""}`}
             onClick={() => handleTabClick(tab.path)} 
           >
