@@ -132,3 +132,41 @@
   font-weight: 400;
   line-height: 12px;
 }
+
+
+
+
+
+.swiper_part {
+  overflow: hidden; 
+}
+
+.slideInRight {
+  animation: slideInRight 1s ease forwards;
+}
+
+.slideInLeft {
+  animation: slideInLeft 1s ease forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 10;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 15;
+    transform: translateX(0);
+  }
+}

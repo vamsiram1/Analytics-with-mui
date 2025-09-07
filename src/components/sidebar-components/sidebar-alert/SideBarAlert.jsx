@@ -1,33 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./SideBarAlert.module.css";
 import bellIcon from "../../../assets/sidebaricons/alert_bellicon.svg";
 import leftarrow_icon from "../../../assets/sidebaricons/leftarrow_icon.svg";
 import rightarrow_icon from "../../../assets/sidebaricons/rightarrow_icon.svg";
-
+import {slides} from "./AlertSlideContent"
 const SideBarAlert = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const slides = [
-    {
-      title: "Requesting Student Term -1 Payments",
-      text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec nibh felis, pulvinar a ipsum ut, pharetra aliquet odio",
-    },
-    {
-      title: "Requesting Student Term -2 Payments",
-      text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec nibh felis, pulvinar a ipsum ut, pharetra aliquet odio",
-    },
-  ];
+  const [direction, setDirection] = useState("next"); 
+  const [animKey, setAnimKey] = useState(0); 
 
   const goToPreviousSlide = () => {
+    setDirection("prev");
     setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+    setAnimKey((k) => k + 1);
   };
 
   const goToNextSlide = () => {
+    setDirection("next");
     setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    setAnimKey((k) => k + 1);
   };
 
   const goToSlide = (index) => {
+    setDirection(index > currentSlide ? "next" : "prev");
     setCurrentSlide(index);
+    setAnimKey((k) => k + 1);
   };
+
+  //  Auto-slide every _ seconds
+  useEffect(() => {
+    const id = setInterval(() => {
+      setDirection("next");
+      setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+      setAnimKey((k) => k + 1);
+    }, 3000);
+    return () => clearInterval(id);
+  }, [slides.length]);
 
   return (
     <div className={styles.alert_box}>
@@ -38,7 +46,12 @@ const SideBarAlert = () => {
         <p className={styles.red_text}>Alert</p>
       </div>
 
-      <div className={styles.swiper_part}>
+      <div
+        key={animKey}
+        className={`${styles.swiper_part} ${
+          direction === "next" ? styles.slideInRight : styles.slideInLeft
+        }`}
+      >
         <h1 className={styles.swipe_header_part}>
           {slides[currentSlide].title}
         </h1>
