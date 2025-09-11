@@ -35,7 +35,8 @@
 
 .zone_indicator {
   display: flex;
-  padding: 14px 14px 15px 14px;
+  height:46px;
+  width:46px;
   justify-content: center;
   align-items: center;
   border-radius: 100px;
