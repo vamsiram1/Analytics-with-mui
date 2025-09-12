@@ -25,9 +25,10 @@ const Button = ({
           width: width || "auto", // Use the provided width or auto if not provided
         }}
       >
-        {righticon && <span className={styles.righticon}>{righticon}</span>}
-        {buttonname}
         {lefticon && <span className={styles.lefticon}>{lefticon}</span>}
+        {buttonname}
+        {righticon && <span className={styles.righticon}>{righticon}</span>}
+        
       </button>
     </div>
   );

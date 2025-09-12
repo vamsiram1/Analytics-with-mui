@@ -1,0 +1,48 @@
+/* mapped your first "modal{ position: relative; }" to a class */
+.modal_root {
+  position: relative;
+}
+
+/* your provided modal styles */
+.modal{
+  position: absolute;
+  top: 5%;
+  left: 25%;
+  width: 50%;
+  border-radius: 27px;
+  background: #FFF;
+  padding: 20px 40px;
+}
+
+.modal_top{
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 0px;
+  border-bottom: 1px solid #DEDEDE;
+}
+
+.modal_top_left{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xicon{
+  cursor: pointer;
+}
+
+.modal_heading{
+  color: #393939;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.modal_sub{
+  color: #575757;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.modal_form{
+  padding-top: 15px;
+}

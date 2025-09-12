@@ -1,47 +1,30 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import TableWidget from "../../../widgets/Table/TableWidget";
 import ZoneForm from "./ZoneForm";
+import DistributionUpdateForm from "../DistributionUpdateForm";
 import { useGetTableDetailsByEmpId } from "../../../queries/application-distribution/dropdownqueries";
 
-const sampleData = [
-  {
-    id: 1,
-    applicationForm: "1001",
-    applicationTo: "Department X",
-    totalApplications: 150,
-    amount: 5000,
-    issuedName: "John Doe",
-    zoneName: "Zone 1",
-    isSelected: false,
-    academicYear: "2021",
-    cityName: "Hitect City",
-    issuedTo: "Person 1",
-    applicationNoFrom: "1001",
-    range: "1-10",
-    applicationNoTo: "1010",
-    issueDate: "2023-10-01",
-    mobileNumber: "1234567890",
-    stateName: "Telangana",
-  }
-];
-
-const fieldMapping = {
-  applicationForm: "applicationNoFrom",
-  issuedName: "issuedTo",
-  zoneName: "zoneName",
-  academicYear: "academicYear",
-  cityName: "cityName",
-  range: "range",
-  applicationNoTo: "applicationNoTo",
-  issueDate: "issueDate",
-  mobileNumber: "mobileNumber",
-  stateName: "stateName",
-};
-
 const ZoneTable = () => {
+  const {
+    data: tableData,
+    isLoading,
+    error,
+  } = useGetTableDetailsByEmpId(1);
 
-  const {data: tableData} = useGetTableDetailsByEmpId(1);
-  
+  // Normalize API -> table rows
+  const transformedData = useMemo(
+    () =>
+      (tableData || []).map((item, index) => ({
+        id: item.appDistributionId || index + 1,
+        applicationForm: String(item.appStartNo ?? ""),
+        applicationTo: String(item.appEndNo ?? ""),
+        totalApplications: item.totalAppCount,
+        amount: item.amount,
+        issuedName: item.issuedToName,
+        zoneName: item.zoneName,
+      })),
+    [tableData]
+  );
 
   const columns = [
     {
@@ -62,7 +45,8 @@ const ZoneTable = () => {
     {
       accessorKey: "amount",
       header: "Amount",
-      cell: ({ row }) => `$${row.original.amount.toLocaleString()}`,
+      cell: ({ row }) =>
+        `${row.original.amount?.toLocaleString?.() ?? row.original.amount}`,
     },
     {
       accessorKey: "issuedName",
@@ -76,32 +60,42 @@ const ZoneTable = () => {
     },
   ];
 
-  const [data, setData] = useState(sampleData);
+  // Local state + paging
+  const [data, setData] = useState(transformedData);
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 10;
-  const totalData = data.length;
 
+  // Keep local data synced with API data
+  useEffect(() => {
+    setData(transformedData);
+    setPageIndex(0); // reset to first page when fresh data arrives
+  }, [transformedData]);
+
+  // Row selection toggle
   const handleSelectRow = (rowData, checked) => {
-    setData((prevData) =>
-      prevData.map((item) =>
+    setData((prev) =>
+      prev.map((item) =>
         item.id === rowData.id ? { ...item, isSelected: checked } : item
       )
     );
   };
 
+  // Apply updates returned from the form (and/or call your update API here)
   const handleUpdate = (updatedRow) => {
-    setData((prevData) =>
-      prevData.map((item) =>
+    setData((prev) =>
+      prev.map((item) =>
         item.id === updatedRow.id
           ? {
               ...item,
-              applicationForm: updatedRow.applicationNoFrom || item.applicationForm,
+              applicationForm:
+                updatedRow.applicationNoFrom || item.applicationForm,
               issuedName: updatedRow.issuedTo || item.issuedName,
               zoneName: updatedRow.zoneName || item.zoneName,
               academicYear: updatedRow.academicYear || item.academicYear,
               cityName: updatedRow.cityName || item.cityName,
               range: updatedRow.range || item.range,
-              applicationNoTo: updatedRow.applicationNoTo || item.applicationNoTo,
+              applicationNoTo:
+                updatedRow.applicationNoTo || item.applicationNoTo,
               issueDate: updatedRow.issueDate || item.issueDate,
               mobileNumber: updatedRow.mobileNumber || item.mobileNumber,
               stateName: updatedRow.stateName || item.stateName,
@@ -111,19 +105,66 @@ const ZoneTable = () => {
     );
   };
 
+  // ---- Modal wiring (outside TableWidget) ----
+  const [open, setOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+
+  // TableWidget calls this when user clicks "Update" for a row
+  const handleRowUpdateClick = (row) => {
+    setSelectedRow(row);
+    setOpen(true);
+  };
+
+  // Map table fields -> form fields for initialValues
+  const fieldMapping = {
+    applicationForm: "applicationNoFrom",
+    issuedName: "issuedTo",
+    zoneName: "zoneName",
+    academicYear: "academicYear",
+    cityName: "cityName",
+    range: "range",
+    applicationTo: "applicationNoTo",
+    issueDate: "issueDate",
+    mobileNumber: "mobileNumber",
+    stateName: "stateName",
+  };
+
+  // ---- Loading & error states ----
+  if (isLoading) {
+    return <div style={{ padding: 16 }}>Table data is loading…</div>;
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: 16, color: "#b00020" }}>
+        Failed to load table data.
+      </div>
+    );
+  }
+
   return (
-    <TableWidget
-      columns={columns}
-      data={data}
-      onUpdate={handleUpdate}
-      onSelectRow={handleSelectRow}
-      pageIndex={pageIndex}
-      setPageIndex={setPageIndex}
-      pageSize={pageSize}
-      totalData={totalData}
-      fieldMapping={fieldMapping}
-      formComponent={ZoneForm}
-    />
+    <>
+      <TableWidget
+        columns={columns}
+        data={data}
+        onSelectRow={handleSelectRow}
+        pageIndex={pageIndex}
+        setPageIndex={setPageIndex}
+        pageSize={pageSize}
+        totalData={data.length}
+        // Keep TableWidget generic: it shouldn't know about forms or modals
+        onRowUpdateClick={handleRowUpdateClick}
+      />
+
+      <DistributionUpdateForm
+        open={open}
+        onClose={() => setOpen(false)}
+        row={selectedRow}
+        fieldMapping={fieldMapping}
+        onSubmit={handleUpdate}
+        forms={{ zone: ZoneForm }}
+      />
+    </>
   );
 };
 

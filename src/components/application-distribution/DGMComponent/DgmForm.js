@@ -10,6 +10,7 @@ import {
   useGetProsByCampus,
 } from "../../../queries/application-distribution/dropdownqueries";
 
+
 // label/id helpers for your backend shapes
 const yearLabel = (y) =>
   y?.academicYear ?? y?.name ?? String(y?.year ?? y?.id ?? "");
@@ -25,7 +26,7 @@ const empId = (e) => e?.id ?? null;
 const asArray = (v) => (Array.isArray(v) ? v : []);
 
 // DgmForm Component
-const DgmForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
+const DgmForm = ({ initialValues = {}, onSubmit, setIsInsertClicked, isUpdate=false, editId }) => {
   const [selectedCityId, setSelectedCityId] = useState(null);
   const [selectedZoneId, setSelectedZoneId] = useState(null);
   const [selectedCampusId, setSelectedCampusId] = useState(null);
@@ -58,7 +59,7 @@ const DgmForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
     data: appNumberRange,
     error,
     isLoading,
-  } = useGetAppNumberRange(selectedAcademicYearId);
+  } = useGetAppNumberRange(selectedAcademicYearId, 4079);
   console.log("Fetched App Number Range:", appNumberRange);
 
   // Normalize arrays
@@ -70,12 +71,9 @@ const DgmForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
   // Options for dropdowns
   const academicYearNames = useMemo(() => {
     const allowedYears = [
+      "2026-27",
       "2025-26",
       "2024-25",
-      "2023-24",
-      "2022-23",
-      "2021-22",
-      "2020-21",
     ];
     const apiYears = yearsData.map(yearLabel).filter(Boolean);
     const filteredYears = allowedYears
@@ -133,6 +131,7 @@ const DgmForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
 
   // Handle data when appNumberRange is fetched
   useEffect(() => {
+    if(isUpdate) return;
     if (appNumberRange && appNumberRange.length > 0) {
       const { id, appFrom, appTo } = appNumberRange[0]; // Extract from first item
       console.log("Application From To: ", { appFrom, appTo });
@@ -143,11 +142,11 @@ const DgmForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
           availableAppNoFrom: String(appFrom),
           availableAppNoTo: String(appTo),
           applicationNoFrom: String(appFrom),
-          selectedBalanceTrackId: Number(id),
+          // selectedBalanceTrackId: Number(id),
         };
       });
     }
-  }, [appNumberRange]);
+  }, [appNumberRange, isUpdate]);
 
   // Reflect user selections and update fields dynamically
   const handleValuesChange = (values) => {
@@ -192,13 +191,15 @@ const DgmForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
     const obj = {};
     if (mobileNo != null) obj.mobileNumber = String(mobileNo);
     // Add application number range to backend values if available
-    if (appNumberRange && appNumberRange.length > 0) {
-      const { id,appFrom, appTo } = appNumberRange[0]; // Extract from first item
+    if (appNumberRange?.length) {
+    const { id, appFrom, appTo } = appNumberRange[0];
+    obj.selectedBalanceTrackId = Number(id);        // ✅ always
+    if (!isUpdate) {                                // insert-only UX fields
       obj.availableAppNoFrom = String(appFrom);
-      obj.availableAppNoTo = String(appTo);
-      obj.selectedBalanceTrackId= Number(id);
-      obj.applicationNoFrom = String(appFrom);
+      obj.availableAppNoTo   = String(appTo);
+      obj.applicationNoFrom  = String(appFrom);
     }
+  }
     // Include IDs in backend values
     if (selectedAcademicYearId != null)
       obj.academicYearId = Number(selectedAcademicYearId);
@@ -219,6 +220,7 @@ const DgmForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
     selectedZoneId,
     selectedCampusId,
     issuedToId,
+    isUpdate,
   ]);
 
   // Prepare dynamic options
@@ -242,7 +244,9 @@ const DgmForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
       dynamicOptions={dynamicOptions} /* Pass dynamic options here */
       backendValues={backendValues}
       onValuesChange={handleValuesChange}
-      isUpdate={false}
+      isUpdate={isUpdate}
+      editId={editId}
+      skipAppNoPatch={isUpdate}
     />
   );
 };

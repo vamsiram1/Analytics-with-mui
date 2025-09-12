@@ -1,5 +1,5 @@
 // src/api/distributionUpdateApi.js
-import axiosInstance from "../../axiosInstance";
+import axiosInstance from "../axiosInstance";
 
 const DISTRIBUTION_UPDATE = "/distribution/updates";
 

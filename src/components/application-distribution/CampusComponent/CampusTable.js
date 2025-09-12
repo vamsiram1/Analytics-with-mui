@@ -1,78 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import TableWidget from "../../../widgets/Table/TableWidget";
 import CampusForm from "./CampusForm";
-
-const sampleData = [
-  {
-    id: 1,
-    applicationForm: "3001",
-    applicationTo: "Department X",
-    totalApplications: 150,
-    amount: 5000,
-    issuedName: "John Doe",
-    campusName: "Campus 1",
-    isSelected: false,
-    academicYear: "2021",
-    cityName: "Hitect City",
-    zoneName: "Zone 1",
-    issuedTo: "Person 1",
-    applicationNoFrom: "3001",
-    range: "1-10",
-    applicationNoTo: "3010",
-    issueDate: "2023-10-01",
-    mobileNumber: "1234567890",
-    campaignDistrict: "District 1",
-    campaignAreaName: "Area 1",
-    availableAppNoFrom: "3001",
-    availableAppNoTo: "3010",
-  },
-  {
-    id: 2,
-    applicationForm: "3011",
-    applicationTo: "Department Y",
-    totalApplications: 200,
-    amount: 7500,
-    issuedName: "Jane Smith",
-    campusName: "Campus 2",
-    isSelected: false,
-    academicYear: "2022",
-    cityName: "Madhapur",
-    zoneName: "Zone 2",
-    issuedTo: "Person 2",
-    applicationNoFrom: "3011",
-    range: "11-20",
-    applicationNoTo: "3030",
-    issueDate: "2023-11-01",
-    mobileNumber: "0987654321",
-    campaignDistrict: "District 2",
-    campaignAreaName: "Area 2",
-    availableAppNoFrom: "3011",
-    availableAppNoTo: "3030",
-  },
-  {
-    id: 3,
-    applicationForm: "3031",
-    applicationTo: "Department Z",
-    totalApplications: 100,
-    amount: 3000,
-    issuedName: "Alice Brown",
-    campusName: "Campus 1",
-    isSelected: false,
-    academicYear: "2021",
-    cityName: "Hitect City",
-    zoneName: "Zone 1",
-    issuedTo: "Person 1",
-    applicationNoFrom: "3031",
-    range: "21-30",
-    applicationNoTo: "3060",
-    issueDate: "2023-12-01",
-    mobileNumber: "1122334455",
-    campaignDistrict: "District 1",
-    campaignAreaName: "Area 1",
-    availableAppNoFrom: "3031",
-    availableAppNoTo: "3060",
-  },
-];
+import DistributionUpdateForm from "../DistributionUpdateForm";
+import { useGetTableDetailsByEmpId } from "../../../queries/application-distribution/dropdownqueries";
 
 const fieldMapping = {
   applicationForm: "applicationNoFrom",
@@ -82,16 +12,38 @@ const fieldMapping = {
   cityName: "cityName",
   zoneName: "zoneName",
   range: "range",
-  applicationNoTo: "applicationNoTo",
+  applicationTo: "applicationNoTo",
   issueDate: "issueDate",
   mobileNumber: "mobileNumber",
-  campaignDistrict: "campaignDistrict",
+  campaignDistrictName: "campaignDistrictName",
   campaignAreaName: "campaignAreaName",
-  availableAppNoFrom: "availableAppNoFrom",
-  availableAppNoTo: "availableAppNoTo",
 };
 
 const CampusTable = () => {
+  const {
+    data: tableData,
+    isLoading,
+    error,
+  } = useGetTableDetailsByEmpId(4178);
+
+  // Normalize API -> table rows
+  const transformedData = useMemo(
+    () =>
+      (tableData || []).map((item, index) => ({
+        id: item.appDistributionId || index + 1,
+        applicationForm: String(item.appStartNo ?? ""),
+        applicationTo: String(item.appEndNo ?? ""),
+        totalApplications: item.totalAppCount,
+        amount: item.amount,
+        issuedName: item.issuedToName,
+        campusName: item.campusName,
+        campaignDistrictName: item.districtName,
+        cityName: item.cityName,
+        campaignAreaName: item.campaignAreaName,
+      })),
+    [tableData]
+  );
+
   const columns = [
     {
       accessorKey: "applicationForm",
@@ -111,7 +63,8 @@ const CampusTable = () => {
     {
       accessorKey: "amount",
       header: "Amount",
-      cell: ({ row }) => `$${row.original.amount.toLocaleString()}`,
+      cell: ({ row }) =>
+        `${row.original.amount?.toLocaleString?.() ?? row.original.amount ?? ""}`,
     },
     {
       accessorKey: "issuedName",
@@ -125,58 +78,94 @@ const CampusTable = () => {
     },
   ];
 
-  const [data, setData] = useState(sampleData);
+  // Local table state
+  const [data, setData] = useState(transformedData);
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 10;
-  const totalData = data.length;
 
+  // Sync local rows when API data changes
+  useEffect(() => {
+    setData(transformedData);
+    setPageIndex(0); // reset to first page on fresh data
+  }, [transformedData]);
+
+  // Row selection
   const handleSelectRow = (rowData, checked) => {
-    setData((prevData) =>
-      prevData.map((item) =>
+    setData((prev) =>
+      prev.map((item) =>
         item.id === rowData.id ? { ...item, isSelected: checked } : item
       )
     );
   };
 
+  // Apply updates from the form
   const handleUpdate = (updatedRow) => {
-    setData((prevData) =>
-      prevData.map((item) =>
+    setData((prev) =>
+      prev.map((item) =>
         item.id === updatedRow.id
           ? {
               ...item,
-              applicationForm: updatedRow.applicationNoFrom || item.applicationForm,
+              applicationForm:
+                updatedRow.applicationNoFrom || item.applicationForm,
               issuedName: updatedRow.issuedTo || item.issuedName,
               campusName: updatedRow.campusName || item.campusName,
               academicYear: updatedRow.academicYear || item.academicYear,
               cityName: updatedRow.cityName || item.cityName,
               zoneName: updatedRow.zoneName || item.zoneName,
               range: updatedRow.range || item.range,
-              applicationNoTo: updatedRow.applicationNoTo || item.applicationNoTo,
+              applicationNoTo:
+                updatedRow.applicationNoTo || item.applicationNoTo,
               issueDate: updatedRow.issueDate || item.issueDate,
               mobileNumber: updatedRow.mobileNumber || item.mobileNumber,
-              campaignDistrict: updatedRow.campaignDistrict || item.campaignDistrict,
-              campaignAreaName: updatedRow.campaignAreaName || item.campaignAreaName,
-              availableAppNoFrom: updatedRow.availableAppNoFrom || item.availableAppNoFrom,
-              availableAppNoTo: updatedRow.availableAppNoTo || item.availableAppNoTo,
+              campaignDistrictName:
+                updatedRow.campaignDistrictName || item.campaignDistrictName,
+              campaignAreaName:
+                updatedRow.campaignAreaName || item.campaignAreaName,
             }
           : item
       )
     );
   };
 
+  // Modal wiring (outside TableWidget)
+  const [open, setOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const handleRowUpdateClick = (row) => {
+    setSelectedRow(row);
+    setOpen(true);
+  };
+
+  // Loading & error states
+  if (isLoading) return <div style={{ padding: 16 }}>Table data is loading…</div>;
+  if (error)
+    return (
+      <div style={{ padding: 16, color: "#b00020" }}>
+        Failed to load table data.
+      </div>
+    );
+
   return (
-    <TableWidget
-      columns={columns}
-      data={data}
-      onUpdate={handleUpdate}
-      onSelectRow={handleSelectRow}
-      pageIndex={pageIndex}
-      setPageIndex={setPageIndex}
-      pageSize={pageSize}
-      totalData={totalData}
-      fieldMapping={fieldMapping}
-      formComponent={CampusForm}
-    />
+    <>
+      <TableWidget
+        columns={columns}
+        data={data}
+        onSelectRow={handleSelectRow}
+        pageIndex={pageIndex}
+        setPageIndex={setPageIndex}
+        pageSize={pageSize}
+        totalData={data.length}
+        onRowUpdateClick={handleRowUpdateClick}
+      />
+
+      <DistributionUpdateForm
+        open={open}
+        onClose={() => setOpen(false)}
+        row={selectedRow}
+        fieldMapping={fieldMapping}
+        onSubmit={handleUpdate}
+        forms={{ campus: CampusForm }}
+      />
+    </>
   );
 };
 

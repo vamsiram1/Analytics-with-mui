@@ -10,20 +10,18 @@ const AnalyticsWholeContainer = () => {
     <>
       <div className={styles.analytics_section}>
         <AnalyticsHeaderContainer />
-        <MetricCards/>
+        <MetricCards />
         <ZoneRateContainer />
       </div>
 
-      <div className={styles.prev_years_graphs_section}> 
+      <div className={styles.prev_years_graphs_section}>
         <div className={styles.accordian_header_text}>
           <figure>
-            <img src={headerIon} className={styles.icon}/>
+            <img src={headerIon} className={styles.icon} />
           </figure>
           <h6 className={styles.header_text}>Previous Year Graph</h6>
         </div>
         <AccordiansContainer />
-        
-        
       </div>
     </>
   );

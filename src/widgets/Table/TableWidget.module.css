@@ -136,6 +136,32 @@ table tbody tr:nth-child(odd) {
 .pagination_buttons {
   display: flex;
 }
+
+.prevButton, .nextButton{
+ 
+  padding: 6px 17px;
+  border: 1px solid #1B1F2426;
+  background-color: #3425FF;
+  color: #F6F8F9;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.prevButton{
+ border-radius: 6px 0px 0px 6px;
+}
+
+.nextButton{
+  border-radius: 0px 6px 6px 0px;
+}
+
+.prevButtonDisabled,
+.nextButtonDisabled {
+  opacity: 0.5;
+  pointer-events: none; 
+  color: #3425FF;
+  background-color: #F6F8FA;
+}
  
 button.prev_button,
 button.next_button {

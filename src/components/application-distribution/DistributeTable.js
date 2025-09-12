@@ -1,12 +1,10 @@
-import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
+import Button from "../../widgets/Button/Button";
+import uparrow from "../../assets/application-distribution/uparrow";
+import CampusTable from "./CampusComponent/CampusTable";
+import DgmTable from "./DGMComponent/DgmTable";
 import styles from "./DistributeTable.module.css";
 import ZoneTable from "./ZoneComponent/ZoneTable";
-import DgmTable from "./DGMComponent/DgmTable";
-import CampusTable from "./CampusComponent/CampusTable";
-import searchicon from "../../assets/application-distribution/searchicon";
-import SearchBox from "../../widgets/Searchbox/Searchbox";
-
 
 const DistributeTable = () => {
   const { pathname } = useLocation(); // Get pathname from useLocation
@@ -47,7 +45,7 @@ const DistributeTable = () => {
           <p className={styles.distribute_table_sub}>{getSubtitleText()}</p>
         </div>
         <div className={styles.distribute_table_searchbox}>
-         <SearchBox placeholder={"Search for Application No"} searchicon={searchicon} type={"reactangle"} width={"331px"}/>
+          <Button buttonname={"Export"} variant={"primary"} type="button" lefticon={uparrow}/>
         </div>
       </div>
       {renderTable()}

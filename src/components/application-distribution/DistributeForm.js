@@ -8,6 +8,11 @@ import styles from "./DistributeForm.module.css";
 import rightarrow from "../../assets/application-distribution/rightarrow";
 import RangeInputBox from "../../widgets/Range/RangeInputBox";
 import { handlePostSubmit } from "../../queries/application-distribution/distributionpostqueries";
+import {
+  updateZone,
+  updateDgm,
+  updateCampus,
+} from "../../queries/application-distribution/distibutionupdatequeries";
 
 // Utility function to get today's date in "dd/mm/yyyy" format
 const getCurrentDate = () => {
@@ -255,11 +260,13 @@ const BackendPatcher = ({
   appNoFormMode,
   middlewareAppNoFrom,
   backendValues = {},
+  skipAppNoPatch = false,
 }) => {
   const { values, setFieldValue } = useFormikContext();
   console.log("Backend Values:", backendValues);
   // applicationNoFrom
   useEffect(() => {
+    if (skipAppNoPatch) return;
     const src =
       appNoFormMode === "middleware" && middlewareAppNoFrom != null
         ? middlewareAppNoFrom
@@ -276,6 +283,7 @@ const BackendPatcher = ({
     backendValues.applicationNoFrom,
     setFieldValue,
     values.applicationNoFrom,
+    skipAppNoPatch,
   ]);
   // mobileNumber
   useEffect(() => {
@@ -288,6 +296,7 @@ const BackendPatcher = ({
   }, [backendValues.mobileNumber, setFieldValue, values.mobileNumber]);
   // availableAppNoFrom
   useEffect(() => {
+    if (skipAppNoPatch) return;
     if (backendValues.availableAppNoFrom != null) {
       const nextVal = String(backendValues.availableAppNoFrom);
       if (values.availableAppNoFrom !== nextVal) {
@@ -298,16 +307,23 @@ const BackendPatcher = ({
     backendValues.availableAppNoFrom,
     setFieldValue,
     values.availableAppNoFrom,
+    skipAppNoPatch,
   ]);
   // availableAppNoTo
   useEffect(() => {
+    if (skipAppNoPatch) return;
     if (backendValues.availableAppNoTo != null) {
       const nextVal = String(backendValues.availableAppNoTo);
       if (values.availableAppNoTo !== nextVal) {
         setFieldValue("availableAppNoTo", nextVal, false);
       }
     }
-  }, [backendValues.availableAppNoTo, setFieldValue, values.availableAppNoTo]);
+  }, [
+    backendValues.availableAppNoTo,
+    setFieldValue,
+    values.availableAppNoTo,
+    skipAppNoPatch,
+  ]);
   // issuedToEmpId
   useEffect(() => {
     if (backendValues.issuedToEmpId != null) {
@@ -409,6 +425,39 @@ const BackendPatcher = ({
   return null;
 };
 
+// Put this helper above DistributeForm (or inside it before handleSubmit)
+const extractApiError = (err) => {
+  // axios-style
+  const data = err?.response?.data;
+
+  // plain string body
+  if (typeof data === "string") return data;
+
+  // common { message } shape
+  if (data?.message && typeof data.message === "string") return data.message;
+
+  // { errors: [...] } or { errors: { field: [..] } }
+  if (Array.isArray(data?.errors)) return data.errors.join(" • ");
+  if (data?.errors && typeof data.errors === "object") {
+    const parts = Object.entries(data.errors).flatMap(([k, v]) =>
+      Array.isArray(v) ? v.map((m) => `${k}: ${m}`) : `${k}: ${v}`
+    );
+    if (parts.length) return parts.join(" • ");
+  }
+
+  // generic object body -> stringify a little
+  if (data && typeof data === "object") {
+    try {
+      return JSON.stringify(data);
+    } catch (_) {}
+  }
+
+  // fallback to normal Error.message
+  if (err?.message) return err.message;
+
+  return "An unexpected error occurred.";
+};
+
 /* --- DistributeForm --- */
 const DistributeForm = ({
   formType = "Zone",
@@ -422,6 +471,8 @@ const DistributeForm = ({
   searchOptions,
   onValuesChange,
   isUpdate = false,
+  editId,
+  skipAppNoPatch = false,
 }) => {
   const [formError, setFormError] = useState(null);
   console.log("Form Type:", formType);
@@ -443,46 +494,68 @@ const DistributeForm = ({
     return baseValues;
   }, [fieldsForType, initialValues, backendValues, isUpdate]);
   const buttonLabel = isUpdate ? "Update" : "Insert";
-  const handleSubmit = (values) => {
+  const handleSubmit = async (rawValues) => {
+    setFormError(null);
+
     try {
-      console.log("handleSubmit triggered for formType:", formType);
-      const patched = { ...values };
-      console.log("Patched values:", patched);
-      if (!patched.academicYearId || patched.academicYearId <= 0) {
-        const error = new Error("Please select a valid Academic Year.");
-        console.error("Validation error:", error.message);
-        setFormError(error.message);
-        throw error;
+      const values = { ...rawValues };
+
+      // Force middleware app-from if used
+      if (
+        appNoFormMode === "middleware" &&
+        middlewareAppNoFrom != null &&
+        middlewareAppNoFrom !== ""
+      ) {
+        values.applicationNoFrom = String(middlewareAppNoFrom);
       }
-      if (!patched.issuedToEmpId || patched.issuedToEmpId <= 0) {
-        const error = new Error(
-          "Please select a valid employee for 'Issued To'."
-        );
-        console.error("Validation error:", error.message);
-        setFormError(error.message);
-        throw error;
+
+      // light guards (Yup still validates)
+      if (!values.academicYearId) {
+        throw new Error("Please select a valid Academic Year.");
       }
-      console.log("Form Values Before Submit:", patched);
-      if (appNoFormMode === "middleware" && middlewareAppNoFrom != null) {
-        patched.applicationNoFrom = String(middlewareAppNoFrom);
+      if (!values.issuedToEmpId && !values.issuedToId) {
+        throw new Error("Please select a valid employee for 'Issued To'.");
       }
-      handlePostSubmit({
-        formValues: patched,
-        formType: formType.toLowerCase(),
-      })
-        .then((data) => {
-          console.log("Form submitted successfully:", data);
-          onSubmit?.(patched);
-          setIsInsertClicked?.(true);
-        })
-        .catch((error) => {
-          console.error("Form submission error:", error.message);
-          setFormError(error.message);
-        });
-    } catch (error) {
-      console.log("handleSubmit is not being triggered or some error", error);
+
+      const t = String(formType || "")
+        .trim()
+        .toLowerCase();
+
+      if (isUpdate) {
+        if (editId === undefined || editId === null) {
+          throw new Error("Missing editId for update call.");
+        }
+
+        let resp;
+        if (t === "zone") resp = await updateZone(editId, values);
+        else if (t === "dgm") resp = await updateDgm(editId, values);
+        else if (t === "campus") resp = await updateCampus(editId, values);
+        else throw new Error(`Unknown formType "${formType}" for update.`);
+
+        onSubmit?.({ ...values, id: editId, _mode: "update" });
+        setIsInsertClicked?.(false);
+        return resp;
+      }
+
+      // Create flow
+      const resp = await handlePostSubmit({
+        formValues: values,
+        formType: t,
+      });
+
+      onSubmit?.({ ...values, _mode: "create" });
+      setIsInsertClicked?.(true);
+      return resp;
+    } catch (err) {
+      // <-- show the raw backend error (string body, message, or errors array/map)
+      const msg = extractApiError(err);
+      setFormError(msg);
+      console.error("handleSubmit error:", err);
+      // No rethrow so the UI can keep the message visible under the button
+      return null;
     }
   };
+
   const renderField = (name, values, setFieldValue, touched, errors) => {
     const cfg = fieldMap[name];
     if (!cfg) return null;
@@ -613,7 +686,7 @@ const DistributeForm = ({
           <Button
             type="submit"
             buttonname={buttonLabel}
-            lefticon={rightarrow}
+            righticon={rightarrow}
             margin={"0"}
             variant="primary"
             disabled={false}

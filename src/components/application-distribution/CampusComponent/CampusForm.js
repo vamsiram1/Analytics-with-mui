@@ -29,7 +29,7 @@ const campusId = (cm) => cm?.id ?? null;
 const empLabel = (e) => e?.name ?? null;
 const empId = (e) => e?.id ?? null;
 
-const CampusForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
+const CampusForm = ({ initialValues = {}, onSubmit, setIsInsertClicked, isUpdate= false, editId }) => {
   // State for selected IDs
   const [selectedAcademicYearId, setSelectedAcademicYearId] = useState(null);
   const [selectedCampaignDistrictId, setSelectedCampaignDistrictId] =
@@ -169,6 +169,7 @@ const CampusForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
 
   // Handle data when appNumberRange is fetched
   useEffect(() => {
+    if(isUpdate) return;
     if (appNumberRange && appNumberRange.length > 0) {
       const { id, appFrom, appTo } = appNumberRange[0];
       setSeedInitialValues((prevValues) => ({
@@ -179,7 +180,7 @@ const CampusForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
         selectedBalanceTrackId: Number(id),
       }));
     }
-  }, [appNumberRange]);
+  }, [appNumberRange, isUpdate]);
 
   // Handle form value changes and update dependent fields
   const handleValuesChange = (values) => {
@@ -243,13 +244,15 @@ const CampusForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
   const backendValues = useMemo(() => {
     const obj = {};
     if (mobileNo != null) obj.mobileNumber = String(mobileNo);
-    if (appNumberRange && appNumberRange.length > 0) {
-      const { id, appFrom, appTo } = appNumberRange[0];
+     if (appNumberRange?.length) {
+    const { id, appFrom, appTo } = appNumberRange[0];
+    obj.selectedBalanceTrackId = Number(id);        // ✅ always
+    if (!isUpdate) {                                // insert-only UX fields
       obj.availableAppNoFrom = String(appFrom);
-      obj.availableAppNoTo = String(appTo);
-      obj.selectedBalanceTrackId = Number(id);
-      obj.applicationNoFrom = String(appFrom);
+      obj.availableAppNoTo   = String(appTo);
+      obj.applicationNoFrom  = String(appFrom);
     }
+  }
     if (selectedAcademicYearId != null)
       obj.academicYearId = Number(selectedAcademicYearId);
     if (selectedCampaignDistrictId != null)
@@ -303,7 +306,9 @@ const CampusForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
       dynamicOptions={dynamicOptions}
       backendValues={backendValues}
       onValuesChange={handleValuesChange}
-      isUpdate={false}
+      isUpdate={isUpdate}
+      editId={editId}
+      skipAppNoPatch={isUpdate}
     />
   );
 };

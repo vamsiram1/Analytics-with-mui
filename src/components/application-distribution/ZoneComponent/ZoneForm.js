@@ -9,8 +9,8 @@ import {
   useGetMobileNo,
   useGetNextAppliNo,
   useZoneApplicationNoFromTo,
+  useGetAppNumberRange,
 } from "../../../queries/application-distribution/dropdownqueries";
-
 // label/id helpers for your backend shapes
 const stateLabel = (s) => s?.stateName ?? s?.name ?? "";
 const stateId = (s) => s?.stateId ?? s?.id ?? null;
@@ -29,9 +29,14 @@ const empLabel = (e) =>
   "";
 const empId = (e) => e?.emp_id ?? e?.employeeId ?? e?.id ?? null;
 const asArray = (v) => (Array.isArray(v) ? v : []);
-
 // ZoneForm Component
-const ZoneForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
+const ZoneForm = ({
+  initialValues = {},
+  onSubmit,
+  setIsInsertClicked,
+  isUpdate = false,
+  editId,
+}) => {
   // IDs that drive dependent queries
   const [selectedStateId, setSelectedStateId] = useState(null);
   const [selectedCityId, setSelectedCityId] = useState(null);
@@ -56,59 +61,51 @@ const ZoneForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
   const { data: employeesRaw = [] } = useGetEmployeesByZone(selectedZoneId);
   // Mobile number for selected employee
   const { data: mobileNo } = useGetMobileNo(issuedToEmpId); // Use issuedToEmpId instead of selectedEmployeeId
-  // NEXT APP NO — hardcode userId=1
-  const { data: nextAppNo } = useGetNextAppliNo(
-    selectedAcademicYearId,
-    selectedStateId ,
-    1
-  );
 
-  // Application number range from API
-  const { data: appNumberRange } = useZoneApplicationNoFromTo(
-    selectedAcademicYearId,
-    selectedStateId,
-    1
-  );
-
+  // Application number range from API (only for inserts)
+  const {
+    data: appNumberRange,
+    error,
+    isLoading,
+  } = useGetAppNumberRange(selectedAcademicYearId, 1);
+  console.log("Fetched App Number Range:", appNumberRange);
   useEffect(() => {
-    console.log("Application From and To:", appNumberRange); // Debugging log
-    if (appNumberRange && appNumberRange.appFrom && appNumberRange.appTo) {
-      setSeedInitialValues((prevValues) => ({
-        ...prevValues,
-        availableAppNoFrom: String(appNumberRange.appFrom), // Convert to string
-        availableAppNoTo: String(appNumberRange.appTo), // Convert to string
-      }));
-    } else {
-      console.log("No valid appNumberRange data received."); // Log when data is invalid
+    // Only set app number range for inserts, not updates
+    if(isUpdate) return;
+    if (appNumberRange && appNumberRange.length > 0) {
+      const { id, appFrom, appTo } = appNumberRange[0]; // Extract from first item
+      console.log("Application From To (Insert): ", { appFrom, appTo });
+      setSeedInitialValues((prevValues) => {
+        console.log("Previous seedInitialValues:", prevValues);
+        return {
+          ...prevValues,
+          availableAppNoFrom: String(appFrom),
+          availableAppNoTo: String(appTo),
+          applicationNoFrom: String(appFrom),
+          selectedBalanceTrackId: Number(id),
+        };
+      });
     }
-  }, [appNumberRange]);
-
+  }, [appNumberRange, isUpdate]);
   // Normalize arrays
   const statesData = useMemo(() => asArray(statesRaw), [statesRaw]);
   const yearsData = useMemo(() => asArray(yearsRaw), [yearsRaw]);
   const citiesData = useMemo(() => asArray(citiesRaw), [citiesRaw]);
   const zonesData = useMemo(() => asArray(zonesRaw), [zonesRaw]);
   const employeesData = useMemo(() => asArray(employeesRaw), [employeesRaw]);
-
   // Options (string labels)
   const stateNames = useMemo(
     () => statesData.map(stateLabel).filter(Boolean),
     [statesData]
   );
-
   const academicYearNames = useMemo(() => {
     const allowedYears = [
+       "2026-27",
       "2025-26",
       "2024-25",
-      "2023-24",
-      "2022-23",
-      "2021-22",
-      "2020-21",
     ];
-
     // Get all academic years from API
     const allApiYears = yearsData.map(yearLabel).filter(Boolean);
-
     // Filter to show only allowed years initially
     const filteredYears = allowedYears
       .filter((year) => allApiYears.includes(year))
@@ -117,19 +114,16 @@ const ZoneForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
         const yearB = parseInt(b.split("-")[0]);
         return yearB - yearA; // Descending order
       });
-
     // Add custom academic year if it exists and is not already in the list
     if (customAcademicYear && !filteredYears.includes(customAcademicYear)) {
       return [customAcademicYear, ...filteredYears];
     }
     return filteredYears;
   }, [yearsData, customAcademicYear]);
-
   // Pass the full list of API years for searching
   const academicYearSearchOptions = useMemo(() => {
     return yearsData.map(yearLabel).filter(Boolean);
   }, [yearsData]);
-
   const cityNames = useMemo(
     () => citiesData.map(cityLabel).filter(Boolean),
     [citiesData]
@@ -142,7 +136,6 @@ const ZoneForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
     () => employeesData.map(empLabel).filter(Boolean),
     [employeesData]
   );
-
   // Reverse maps: label → id
   const stateNameToId = useMemo(() => {
     const m = new Map();
@@ -169,7 +162,6 @@ const ZoneForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
     employeesData.forEach((e) => m.set(empLabel(e), empId(e)));
     return m;
   }, [employeesData]);
-
   // Reflect user selections from DistributeForm
   const handleValuesChange = (values) => {
     // Academic Year
@@ -183,7 +175,6 @@ const ZoneForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
         setSelectedAcademicYearId(null); // No ID for custom input
       }
     }
-
     // State
     if (values.stateName && stateNameToId.has(values.stateName)) {
       const stId = stateNameToId.get(values.stateName);
@@ -194,7 +185,6 @@ const ZoneForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
         setIssuedToEmpId(null); // Reset employee ID when state changes
       }
     }
-
     // City
     if (values.cityName && cityNameToId.has(values.cityName)) {
       const ctId = cityNameToId.get(values.cityName);
@@ -204,7 +194,6 @@ const ZoneForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
         setIssuedToEmpId(null); // Reset employee ID when city changes
       }
     }
-
     // Zone
     if (values.zoneName && zoneNameToId.has(values.zoneName)) {
       const znId = zoneNameToId.get(values.zoneName);
@@ -213,36 +202,32 @@ const ZoneForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
         setIssuedToEmpId(null); // Reset employee ID when zone changes
       }
     }
-
     // Employee
     if (values.issuedTo && empNameToId.has(values.issuedTo)) {
       const eid = empNameToId.get(values.issuedTo);
       if (eid !== issuedToEmpId) setIssuedToEmpId(eid); // Set the employee ID
     }
   };
-
   const backendValues = useMemo(() => {
     const obj = {};
     if (mobileNo != null) obj.mobileNumber = String(mobileNo);
-
-    // Add application number range to backend values if available
-    if (appNumberRange) {
-      obj.availableAppNoFrom = String(appNumberRange.appFrom); // Convert to string
-      obj.availableAppNoTo = String(appNumberRange.appTo); // Convert to string
+    // Only add application number range to backend values for inserts
+    if (!isUpdate && appNumberRange && appNumberRange.length > 0) {
+      const { id, appFrom, appTo } = appNumberRange[0]; // Extract from first item
+      obj.availableAppNoFrom = String(appFrom);
+      obj.availableAppNoTo = String(appTo);
+      obj.selectedBalanceTrackId = Number(id);
+      obj.applicationNoFrom = String(appFrom);
     }
-
     // Include issuedToEmpId in backend values
     if (issuedToEmpId != null) obj.issuedToEmpId = Number(issuedToEmpId);
-
     // Include academicYearId in backend values
     if (selectedAcademicYearId != null)
       obj.academicYearId = Number(selectedAcademicYearId);
-
     // Include stateId, cityId, and zoneId in backend values
     if (selectedStateId != null) obj.stateId = Number(selectedStateId);
     if (selectedCityId != null) obj.cityId = Number(selectedCityId);
     if (selectedZoneId != null) obj.zoneId = Number(selectedZoneId);
-
     return obj;
   }, [
     mobileNo,
@@ -252,11 +237,10 @@ const ZoneForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
     selectedStateId,
     selectedCityId,
     selectedZoneId,
+    isUpdate,
   ]);
-
-  const appNoFormMode = nextAppNo ? "middleware" : "manual";
-  const middlewareAppNoFrom = nextAppNo ? String(nextAppNo) : undefined;
-
+  const appNoFormMode = isUpdate ? "manual" : (appNumberRange ? "middleware" : "manual");
+  // const middlewareAppNoFrom = isUpdate ? undefined : (appNumberRange ? String(appNumberRange) : undefined);
   const dynamicOptions = useMemo(
     () => ({
       academicYear: academicYearNames,
@@ -267,14 +251,12 @@ const ZoneForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
     }),
     [academicYearNames, stateNames, cityNames, zoneNames, issuedToNames]
   );
-
   const searchOptions = useMemo(
     () => ({
       academicYear: academicYearSearchOptions,
     }),
     [academicYearSearchOptions]
   );
-
   return (
     <DistributeForm
       formType="Zone"
@@ -285,11 +267,12 @@ const ZoneForm = ({ initialValues = {}, onSubmit, setIsInsertClicked }) => {
       searchOptions={searchOptions}
       backendValues={backendValues}
       appNoFormMode={appNoFormMode}
-      middlewareAppNoFrom={middlewareAppNoFrom}
+      // middlewareAppNoFrom={middlewareAppNoFrom}
       onValuesChange={handleValuesChange}
-      isUpdate={false}
+      isUpdate={isUpdate}
+      editId={editId}
+      skipAppNoPatch={isUpdate}
     />
   );
 };
-
 export default ZoneForm;
