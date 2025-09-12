@@ -95,3 +95,31 @@
   right: 20px;
   z-index: 1;
 }
+
+
+
+.prev_years_graphs_section {
+  width: 28%;
+  background-color: #ffffff;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.accordian_header_text {
+  display: flex;
+  gap: 5px;
+  margin-bottom:20px;
+}
+
+.icon {
+  width: 22px;
+  height: 22px;
+}
+
+.header_text {
+  color: #56555c;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}

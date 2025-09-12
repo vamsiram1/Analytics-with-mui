@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./DistributeTab.module.css";
 import {
   NavLink,
@@ -14,6 +14,8 @@ import CampusForm from "./CampusComponent/CampusForm";
 import DistributeTable from "./DistributeTable";
 import Button from "../../widgets/Button/Button";
 import plusicon from "../../assets/application-distribution/plusicon";
+import AccordiansContainer from "../../containers/application-analytics-containers/accordians-container/AccordiansContainer";
+import headerIon from "../../assets/application-analytics/accordians_header.png";
 
 const DistributeTab = () => {
   const [isInsertClicked, setIsInsertClicked] = useState(false);
@@ -41,11 +43,9 @@ const DistributeTab = () => {
     return "Distribute New to Zone";
   };
 
-  const handleDistributeButton = () =>{
+  const handleDistributeButton = () => {
     setIsInsertClicked(false);
-  }
-
-  
+  };
 
   return (
     <>
@@ -94,14 +94,31 @@ const DistributeTab = () => {
             <div className={styles.distribute_nav_content}>
               <Routes>
                 <Route path="" element={<Navigate to="zone" replace />} />
-                <Route path="/zone" element={<ZoneForm setIsInsertClicked={setIsInsertClicked}/>} />
-                <Route path="/dgm" element={<DgmForm setIsInsertClicked={setIsInsertClicked}/>} />
-                <Route path="/campus" element={<CampusForm setIsInsertClicked={setIsInsertClicked}/>} />
+                <Route
+                  path="/zone"
+                  element={<ZoneForm setIsInsertClicked={setIsInsertClicked} />}
+                />
+                <Route
+                  path="/dgm"
+                  element={<DgmForm setIsInsertClicked={setIsInsertClicked} />}
+                />
+                <Route
+                  path="/campus"
+                  element={
+                    <CampusForm setIsInsertClicked={setIsInsertClicked} />
+                  }
+                />
               </Routes>
             </div>
           </div>
-          <div className={styles.distribute_tab_graph}>
-            <p>graph</p>
+          <div className={styles.prev_years_graphs_section}>
+            <div className={styles.accordian_header_text}>
+              <figure>
+                <img src={headerIon} className={styles.icon} />
+              </figure>
+              <h6 className={styles.header_text}>Previous Year Graph</h6>
+            </div>
+            <AccordiansContainer />
           </div>
         </div>
       )}
