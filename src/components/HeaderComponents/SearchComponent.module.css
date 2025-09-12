@@ -20,7 +20,7 @@
   height: 17px;
 }
 
-input[type="text"]{
+.tophead_searchflex input[type="text"]{
   flex:1;
   border:none;
   font-size: 16px;

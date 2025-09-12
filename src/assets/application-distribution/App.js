@@ -1,11 +1,8 @@
+import './App.css';
+import ApplicationTab from './components/ApplicationComponents/ApplicationTab';
+import Sidebar from './components/Sidebar';
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import "./App.css";
-
-import Header from "./components/HeaderComponents/Header";
-import SideBarContainer from "./containers/SideBar-container/SideBarContainer";
-import ApplicationModuleContainer from "./containers/Application-module-container/ApplicationModuleContainer";
+import { Route, Routes } from 'react-router-dom';
 
 const Student = () => <div>Student</div>
 const Dashboard = () => <div>Dasboard</div>
@@ -21,23 +18,18 @@ const Cctv = () => <div>CCTV</div>
 const Hrms = () => <div>HRMS</div>
 const Masters = () => <div>Masters</div>
 
-// Create the QueryClient instance
-const queryClient = new QueryClient();
-
-function AppWrapper() {
-  
+function App() {
   return (
-    <div className="whole_container">
-      <Header />
-
-      <aside>
-        <SideBarContainer />
-      </aside>
-
-       <Routes>
+      <div className='scopes_app'>
+        <header></header>
+        <aside>
+          <Sidebar/>
+        </aside>
+        <main>
+           <Routes>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/students" element={<Students />} />
-                <Route path="/application/*" element={<ApplicationModuleContainer />} />
+                <Route path="/application/*" element={<ApplicationTab />} />
                 <Route path="/employee" element={<Employee />} />
                 <Route path="/fleet" element={<Fleet />} />
                 <Route path="/warehouse" element={<Warehouse />} />
@@ -49,17 +41,8 @@ function AppWrapper() {
                 <Route path="/hrms" element={<Hrms />} />
                 <Route path="/masters" element={<Masters />} />
            </Routes>
-    </div>
-  );
-}
-
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AppWrapper />
-      </BrowserRouter>
-    </QueryClientProvider>
+        </main>
+      </div>
   );
 }
 

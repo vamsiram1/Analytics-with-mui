@@ -1,5 +1,5 @@
 import React from "react";
-import logo from "../../assets/sc_logo.png";
+import logo from "../../assets/application-analytics/sc_logo.png";
 import styles from "./LogoComponent.module.css";
 
 const LogoComponent = () => {

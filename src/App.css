@@ -22,22 +22,3 @@ aside {
 aside::-webkit-scrollbar {
    display: none;               
 }
-
-.main_content {
-  width: calc(100vw - 17%);
-  padding: 10px;
-  box-sizing: border-box;
-  margin-top: 54px;
-  margin-left: 17%;
-}
-
-.analytics_wrapper {
-  display: flex;
-  margin-top: 10px;
-  gap: 15px;
-  width: 100%;
-}
-
-.prev_years_graphs_section {
-  width: 30%;
-}

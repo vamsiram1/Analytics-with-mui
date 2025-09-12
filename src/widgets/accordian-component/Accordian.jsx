@@ -6,10 +6,10 @@ import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import BarGraph from "../graph-widget/BarGraph";
 import styles from "./Accordian.module.css";
-import graphTitleIcon from "../../assets/paper.svg";
+import graphTitleIcon from "../../assets/application-analytics/paper.svg";
 import PercentBox from "./PercentBox";
-import redDot from "../../assets/red_dot.png";
-import greenDot from "../../assets/green_dot.png";
+import redDot from "../../assets/application-analytics/red_dot.png";
+import greenDot from "../../assets/application-analytics/green_dot.png";
 
 // Controlled by parent: receives `expanded` and `onChange`
 const Accordian = ({ zoneTitle, percentageItems, graphBarData, expanded, onChange }) => {
