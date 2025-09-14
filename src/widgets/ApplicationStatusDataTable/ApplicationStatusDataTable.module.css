@@ -45,9 +45,9 @@
   font-size: 14px;
   font-weight: 400;
   line-height: 24px;
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
-  padding: 7px 16px;
+  padding: 8px 14px;
 }
 .table th:first-child,
 .table td:first-child {
@@ -104,6 +104,13 @@ table tbody tr:nth-child(odd) {
   font-size: 12px;
   font-weight: 400;
 }
+
+.update_btn:disabled {
+  background: #F5F5F5;
+  color: #999;
+  cursor: not-allowed;
+  border: 1px solid #E0E0E0;
+}
  
 /* Pagination */
 .pagination_content {
@@ -135,32 +142,6 @@ table tbody tr:nth-child(odd) {
  
 .pagination_buttons {
   display: flex;
-}
-
-.prevButton, .nextButton{
- 
-  padding: 6px 17px;
-  border: 1px solid #1B1F2426;
-  background-color: #3425FF;
-  color: #F6F8F9;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.prevButton{
- border-radius: 6px 0px 0px 6px;
-}
-
-.nextButton{
-  border-radius: 0px 6px 6px 0px;
-}
-
-.prevButtonDisabled,
-.nextButtonDisabled {
-  opacity: 0.5;
-  pointer-events: none; 
-  color: #3425FF;
-  background-color: #F6F8FA;
 }
  
 button.prev_button,

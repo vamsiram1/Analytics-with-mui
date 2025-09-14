@@ -1,48 +1,3 @@
-// import { useState } from "react";
-// import ZoneNameDropdown from "../zone-name-dropdown/ZoneNameDropdown";
-// import styles from "./SearchDropdown.module.css";
-
-// const SearchDropdown = () => {
-
-//   const [activeTab, setActiveTab] = useState("Zone");
-
-//   const tabs = ["Zone", "DGM", "Campus"];
-
-//   return (
-//     <div
-//       id="search_dropdown_wrapper"
-//       className={styles.search_dropdown_wrapper}
-//     >
-//       <label className={styles.dropdown_header}>Filter Category</label>
-
-//       <ul className={styles.all_tabs}>
-//         {tabs.map((tab) => (
-//           <li
-//             key={tab}
-//             className={`${styles.tabs_dropdown} ${
-//               activeTab === tab ? styles.active_tab : ""
-//             }`}
-//             onClick={() => setActiveTab(tab)}
-//           >
-//             <a className={`${styles.tab_dropdown} ${
-//               activeTab === tab ? styles.active_tab : ""
-//             }`} >{tab}</a>
-//           </li>
-//         ))}
-//       </ul>
-
-//       <ZoneNameDropdown />
-//     </div>
-//   );
-// };
-
-// export default SearchDropdown;
-
-
-
-
-
-
 import { useEffect, useMemo, useState } from "react";
 import ZoneNameDropdown from "../zone-name-dropdown/ZoneNameDropdown";
 import styles from "./SearchDropdown.module.css";
@@ -119,7 +74,6 @@ const SearchDropdown = ({ userRole = "Zone", onTabChange }) => {
         ))}
       </ul>
 
-      {/* Keep your dependent UI below; you can also show/hide by activeTab */}
       <ZoneNameDropdown />
     </div>
   );

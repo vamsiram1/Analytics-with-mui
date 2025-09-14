@@ -22,3 +22,7 @@ option {
   background: transparent;
   pointer-events: none;
 }
+
+.fig{
+  cursor:pointer;
+}
