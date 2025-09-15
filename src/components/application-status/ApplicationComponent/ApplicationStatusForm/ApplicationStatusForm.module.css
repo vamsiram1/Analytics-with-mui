@@ -1,20 +1,20 @@
 .Application_Status_Form_main_app_status_container {
   background: #ffffff;
   border-radius: 10px;
-  width:100%;
-  position: relative;
-  overflow-y: auto; /* Scrolling within container */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  width:100%; 
+   position: relative;
+  overflow-y: auto;
+  scrollbar-width: none; 
+  -ms-overflow-style: none; 
   padding: 15px;
 }
 
-/* Hide scrollbar for Chrome, Edge, Safari */
+
 .Application_Status_Form_main_app_status_container::-webkit-scrollbar {
   display: none;
 }
 
-/* Back button (arrow) */
+
 .Application_Status_Form_main_back_btn {
   background: transparent;
   border: none;
@@ -37,17 +37,16 @@
   transform: scale(1.1);
 }
 
-/* Header wrapper */
 .Application_Status_Form_main_app_status_header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  /* margin-bottom: 15px; */
+ 
   width: 100%;
   position: relative;
 }
 
-/* Left: Back Button */
+
 .Application_Status_Form_main_app_status_header_back_btn {
   display: flex;
   align-items: center;
@@ -55,14 +54,13 @@
   padding: 5px;
 }
 
-/* Right: Status Header */
 .Application_Status_Form_main_app_status_header_status_header {
   display: flex;
   align-items: center;
   margin-left: auto;
 }
 
-/* Layout for selector + progress */
+
 .Application_Status_Form_main_layout_wrapper {
   display: flex;
   flex-direction: row;
@@ -73,7 +71,7 @@
   padding: 2px;
 }
 
-/* Form wrapper */
+
 .Application_Status_Form_main_form_wrapper {
   border: 2px solid #dde2e4;
   border-radius: 10px;
@@ -87,14 +85,14 @@
   display: none;
 }
 
-/* Coupon wrapper */
+
 .Application_Status_Form_main_coupon_wrapper {
   margin-bottom: 20px;
 }
 
-/* Payment section */
+
 .Application_Status_Form_main_payment_info_form {
   background: #fff;
   border-radius: 10px;
   padding: 20px;
-}
+} 

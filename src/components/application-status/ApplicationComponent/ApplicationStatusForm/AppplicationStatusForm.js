@@ -164,11 +164,12 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     marks: "",
     camp: "",
     admissionReferredBy: "",
-    category: "SSC",
+    category: 1,
     htNo: "",
     aadhaar: "",
     appType: "",
     appFee: "",
+    applicationFee: "500",
     surname: "",
     studentName: "",
     fatherName: "",
@@ -210,12 +211,12 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     district: "",
     mandal: "",
     pincode: "",
-    payMode: "Cash",
+    payMode: 1,
     paymentDate: null,
     amount: "",
     receiptNumber: "",
     appFeeReceived: false,
-    appFeePayMode: "Cash",
+    appFeePayMode: 1,
     appFeePayDate: null,
     appFeeAmount: "",
     appFeeReceiptNo: "",
@@ -798,16 +799,26 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
   );
 
   const handleNext = (values, setFieldValue, validateForm, setTouched) => {
+    console.log("🔍 handleNext called - validating form...");
     validateForm().then((errors) => {
+      console.log("🔍 Validation errors:", errors);
+      console.log("🔍 Number of errors:", Object.keys(errors).length);
+     
       if (Object.keys(errors).length === 0) {
+        console.log("✅ No validation errors - proceeding to next step");
         if (activeStep === 1) {
           setFieldValue("couponMobile", couponDetails.mobile);
           setFieldValue("couponCode", couponDetails.code);
         }
         if (activeStep < steps.length - 1) setActiveStep((prev) => prev + 1);
       } else {
+        console.log("❌ Validation errors found - setting touched fields");
         const touchedFields = {};
         Object.keys(errors).forEach((field) => {
+          console.log(`🔍 Setting touched for field: ${field}`);
+          if (field === "joinedCampus") {
+            console.log("🎯 Found joinedCampus in errors:", errors[field]);
+          }
           touchedFields[field] = true;
           if (field.includes("siblingInformation")) {
             const match = field.match(/siblingInformation\[(\d+)\]\.(\w+)/);
@@ -819,6 +830,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
             }
           }
         });
+        console.log("🔍 Touched fields to set:", touchedFields);
         setTouched(touchedFields);
       }
     });
@@ -845,7 +857,6 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
       setShowSuccess(true);
     } catch (error) {
       console.error("Error submitting admission form:", error);
-      alert("Failed to submit admission form: " + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -853,11 +864,9 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
 
   const handleCouponSubmit = (setFieldValue) => {
     if (!/^\d{10}$/.test(String(couponDetails.mobile || ""))) {
-      alert("Enter a valid 10 digit mobile number");
       return;
     }
     if (!couponDetails.code || String(couponDetails.code).trim() === "") {
-      alert("Enter a valid coupon code");
       return;
     }
     setFieldValue("couponMobile", couponDetails.mobile);

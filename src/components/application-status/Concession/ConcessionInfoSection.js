@@ -1,27 +1,68 @@
-
 import { Button as MUIButton } from "@mui/material";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
+import Button from "../../../widgets/Button/Button";
+import Dropdown from "../../../widgets/Dropdown/Dropdown";
+import InputBox from "../../../widgets/Inputbox/InputBox";
 import { ReactComponent as BackArrow } from "../../../assets/application-status/Backarrow.svg";
 import { ReactComponent as PhoneIcon } from "../../../assets/application-status/PhoneIcon.svg";
 import SkipIcon from "../../../assets/application-status/SkipIcon.svg";
 import { ReactComponent as TrendingUpIcon } from "../../../assets/application-status/Trending up.svg";
 import apiService from "../../../queries/application-status/SaleFormapis";
-import Button from "../../../widgets/Button/Button";
-import Dropdown from "../../../widgets/Dropdown/Dropdown";
-import InputBox from "../../../widgets/Inputbox/InputBox";
 import styles from "./ConcessionInfoSection.module.css";
-
+ 
 // Validation schema for ConcessionInfoSection (base schema without mobileNumber validation)
 const baseValidationSchema = Yup.object().shape({
   yearConcession1st: Yup.string()
     .matches(/^\d*$/, "Amount must be numeric")
+    .test('total-concession-limit', 'Total concession cannot exceed 100% of orientation fee', function(value) {
+      const { parent } = this;
+      const orientationFee = parent.OrientationFee;
+     
+      if (!orientationFee) return true; // Allow if orientation fee is not set
+     
+      const concession1st = parseFloat(value) || 0;
+      const concession2nd = parseFloat(parent.yearConcession2nd) || 0;
+      const concession3rd = parseFloat(parent.yearConcession3rd) || 0;
+      const totalConcession = concession1st + concession2nd + concession3rd;
+      const orientationFeeValue = parseFloat(orientationFee) || 0;
+     
+      return totalConcession <= orientationFeeValue;
+    })
     .notRequired(),
   yearConcession2nd: Yup.string()
     .matches(/^\d*$/, "Amount must be numeric")
+    .test('total-concession-limit', 'Total concession cannot exceed 100% of orientation fee', function(value) {
+      const { parent } = this;
+      const orientationFee = parent.OrientationFee;
+     
+      if (!orientationFee) return true; // Allow if orientation fee is not set
+     
+      const concession1st = parseFloat(parent.yearConcession1st) || 0;
+      const concession2nd = parseFloat(value) || 0;
+      const concession3rd = parseFloat(parent.yearConcession3rd) || 0;
+      const totalConcession = concession1st + concession2nd + concession3rd;
+      const orientationFeeValue = parseFloat(orientationFee) || 0;
+     
+      return totalConcession <= orientationFeeValue;
+    })
     .notRequired(),
   yearConcession3rd: Yup.string()
     .matches(/^\d*$/, "Amount must be numeric")
+    .test('total-concession-limit', 'Total concession cannot exceed 100% of orientation fee', function(value) {
+      const { parent } = this;
+      const orientationFee = parent.OrientationFee;
+     
+      if (!orientationFee) return true; // Allow if orientation fee is not set
+     
+      const concession1st = parseFloat(parent.yearConcession1st) || 0;
+      const concession2nd = parseFloat(parent.yearConcession2nd) || 0;
+      const concession3rd = parseFloat(value) || 0;
+      const totalConcession = concession1st + concession2nd + concession3rd;
+      const orientationFeeValue = parseFloat(orientationFee) || 0;
+     
+      return totalConcession <= orientationFeeValue;
+    })
     .notRequired(),
   givenBy: Yup.string().when(["yearConcession1st", "yearConcession2nd", "yearConcession3rd"], {
     is: (c1, c2, c3) => {
@@ -94,7 +135,7 @@ const baseValidationSchema = Yup.object().shape({
     then: (schema) => schema.required("Reason is required when additional concession is selected"),
   }),
 });
-
+ 
 // Custom validation function to handle mobileNumber conditionally
 const customValidate = (values, showMobileNumber) => {
   const errors = {};
@@ -107,7 +148,7 @@ const customValidate = (values, showMobileNumber) => {
   }
   return errors;
 };
-
+ 
 const ConcessionInfoSection = ({
   handleNext,
   handleBack,
@@ -132,21 +173,71 @@ const ConcessionInfoSection = ({
   const [error, setError] = useState(null);
   const [showMobileNumber, setShowMobileNumber] = useState(false);
   const [persistentErrors, setPersistentErrors] = useState({});
-
+ 
+  // Helper function to check if total concession exceeds orientation fee
+  const getConcessionTotalError = () => {
+    const orientationFee = values.OrientationFee;
+    if (!orientationFee) return null;
+   
+    const concession1st = parseFloat(values.yearConcession1st) || 0;
+    const concession2nd = parseFloat(values.yearConcession2nd) || 0;
+    const concession3rd = parseFloat(values.yearConcession3rd) || 0;
+    const totalConcession = concession1st + concession2nd + concession3rd;
+    const orientationFeeValue = parseFloat(orientationFee) || 0;
+   
+    if (totalConcession > orientationFeeValue) {
+      return `Total concession cannot exceed 100% of orientation fee (Max: ${orientationFeeValue})`;
+    }
+   
+    return null;
+  };
+ 
+  // Helper function to get maximum allowed concession amount
+  const getMaxConcessionAmount = () => {
+    const orientationFee = values.OrientationFee;
+    if (!orientationFee) return null;
+   
+    const orientationFeeValue = parseFloat(orientationFee) || 0;
+    return orientationFeeValue;
+  };
+ 
+  // Helper function to determine if a field should show an error
+  const shouldShowError = (fieldName) => {
+    // Special handling for concession fields - show error if total exceeds limit
+    if (["yearConcession1st", "yearConcession2nd", "yearConcession3rd"].includes(fieldName)) {
+      return getConcessionTotalError() !== null || (touched[fieldName] && errors[fieldName]) || persistentErrors[fieldName];
+    }
+   
+    return (touched[fieldName] && errors[fieldName]) || persistentErrors[fieldName];
+  };
+ 
+  // Helper function to get field error message
+  const getFieldError = (fieldName) => {
+    // Special handling for concession fields - return custom error message
+    if (["yearConcession1st", "yearConcession2nd", "yearConcession3rd"].includes(fieldName)) {
+      const customError = getConcessionTotalError();
+      if (customError) {
+        return customError;
+      }
+    }
+   
+    return errors[fieldName] || persistentErrors[fieldName];
+  };
+ 
   useEffect(() => {
     const fetchData = async () => {
       console.log("🔄 Starting to fetch concession dropdown options from API...");
-      
+     
       try {
         // Fetch both APIs in parallel
         const [authorizedByData, concessionReasonData] = await Promise.all([
           apiService.fetchAuthorizedByAll(),
           apiService.fetchConcessionReasonAll(),
         ]);
-
+ 
         console.log("Authorized by data:", authorizedByData);
         console.log("Concession reason data:", concessionReasonData);
-
+ 
         // Process authorized by data (for givenBy, authorizedBy, concessionWrittenBy)
         let authorizedByArray = [];
         if (Array.isArray(authorizedByData)) {
@@ -154,14 +245,14 @@ const ConcessionInfoSection = ({
         } else if (authorizedByData && typeof authorizedByData === 'object') {
           authorizedByArray = [authorizedByData];
         }
-
+ 
         const processedAuthorizedBy = authorizedByArray
           .filter((item) => item && item.id != null && item.name)
           .map((item) => ({
             value: item.id?.toString() || "",
             label: item.name || "",
           }));
-
+ 
         // Process concession reason data
         let concessionReasonArray = [];
         if (Array.isArray(concessionReasonData)) {
@@ -169,24 +260,24 @@ const ConcessionInfoSection = ({
         } else if (concessionReasonData && typeof concessionReasonData === 'object') {
           concessionReasonArray = [concessionReasonData];
         }
-
+ 
         const processedConcessionReasons = concessionReasonArray
           .filter((item) => item && item.id != null && item.name)
           .map((item) => ({
             value: item.id?.toString() || "",
             label: item.name || "",
           }));
-
+ 
         // Set the options
         setEmployeeOptions(processedAuthorizedBy);
         setReasonOptions(processedConcessionReasons);
-
+ 
         // Update loading states
         setLoadingStates({
           reasons: false,
           employees: false,
         });
-
+ 
         console.log("✅ Loaded authorized by:", processedAuthorizedBy);
         console.log("✅ Loaded concession reasons:", processedConcessionReasons);
       } catch (error) {
@@ -197,15 +288,15 @@ const ConcessionInfoSection = ({
         });
       }
     };
-    
+   
     fetchData();
   }, []);
-
+ 
   // Trigger validation when concession amounts change
   useEffect(() => {
     const hasConcession = [values.yearConcession1st, values.yearConcession2nd, values.yearConcession3rd]
       .some((v) => v && v.toString().trim() !== "" && Number(v) > 0);
-
+ 
     if (hasConcession) {
       // Set persistent errors for all required fields when concession is entered
       setPersistentErrors({
@@ -216,7 +307,7 @@ const ConcessionInfoSection = ({
         reason: "Reason is required when concession is applied",
         concessionReasonId: "Reason is required when concession is applied"
       });
-      
+     
       // Mark all concession-related fields as touched to show validation errors
       setFieldTouched("givenBy", true);
       setFieldTouched("givenById", true);
@@ -238,7 +329,7 @@ const ConcessionInfoSection = ({
       setFieldValue("additionalReason", "");
       setFieldValue("concessionAmount", "");
       setFieldValue("additionalConcession", false);
-      
+     
       // Clear touched state and persistent errors for these fields
       setFieldTouched("givenBy", false);
       setFieldTouched("givenById", false);
@@ -251,12 +342,12 @@ const ConcessionInfoSection = ({
       setFieldTouched("additionalReason", false);
       setFieldTouched("concessionAmount", false);
       setFieldTouched("additionalConcession", false);
-      
+     
       // Clear persistent errors
       setPersistentErrors({});
     }
   }, [values.yearConcession1st, values.yearConcession2nd, values.yearConcession3rd, setFieldTouched, setFieldValue]);
-
+ 
   const flatfields = [
     { label: "Mobile Number", name: "mobileNumber", placeholder: "Enter Mobile Number", required: true },
     { label: "1st Year Concession", name: "yearConcession1st", placeholder: "Enter 1st Year Concession" },
@@ -270,7 +361,7 @@ const ConcessionInfoSection = ({
     { label: "Concession Written By", name: "concessionWrittenBy", type: "select", options: employeeOptions },
     { label: "Reason", name: "additionalReason", placeholder: "Enter Reason" },
   ];
-
+ 
   const handleSectionChange = (e) => {
     const { name, value } = e.target;
     let finalValue = value;
@@ -283,7 +374,7 @@ const ConcessionInfoSection = ({
     }
     setFieldValue(name, finalValue);
     setFieldTouched(name, true);
-    
+   
     // Handle concession amount changes
     if (["yearConcession1st", "yearConcession2nd", "yearConcession3rd"].includes(name)) {
       // Get all concession amounts including the current change
@@ -292,9 +383,26 @@ const ConcessionInfoSection = ({
         name === "yearConcession2nd" ? finalValue : values.yearConcession2nd,
         name === "yearConcession3rd" ? finalValue : values.yearConcession3rd
       ];
-      
+     
       const hasConcession = allConcessionAmounts.some((v) => v && v.toString().trim() !== "" && Number(v) > 0);
-      
+     
+      // Real-time validation for concession total
+      const orientationFee = values.OrientationFee;
+      if (hasConcession && orientationFee) {
+        const totalConcession = allConcessionAmounts.reduce((sum, amount) => sum + (parseFloat(amount) || 0), 0);
+        const orientationFeeValue = parseFloat(orientationFee) || 0;
+       
+        console.log(`🔍 Concession validation:`, {
+          totalConcession,
+          orientationFeeValue,
+          exceeds: totalConcession > orientationFeeValue
+        });
+       
+        if (totalConcession > orientationFeeValue) {
+          console.log(`⚠️ Total concession (${totalConcession}) exceeds orientation fee (${orientationFeeValue})`);
+        }
+      }
+     
       if (hasConcession) {
         // Only mark fields as touched to show validation errors, don't clear them
         setFieldTouched("givenBy", true);
@@ -317,7 +425,7 @@ const ConcessionInfoSection = ({
         setFieldValue("additionalReason", "");
         setFieldValue("concessionAmount", "");
         setFieldValue("additionalConcession", false);
-        
+       
         // Clear touched state for these fields
         setFieldTouched("givenBy", false);
         setFieldTouched("givenById", false);
@@ -332,23 +440,23 @@ const ConcessionInfoSection = ({
         setFieldTouched("additionalConcession", false);
       }
     }
-    
+   
     // Show mobileNumber row when typing in coupon field
     if (name === "coupon" && finalValue.trim() !== "") {
       setShowMobileNumber(true);
     }
   };
-
+ 
   const handleEmployeeChange = (name) => (e) => {
     const selectedLabel = e.target.value;
     const selectedEmployee = employeeOptions.find((opt) => opt.label === selectedLabel);
     console.log(`🎯 handleEmployeeChange for ${name}:`, { selectedLabel, selectedEmployee });
-    
+   
     setFieldValue(name, selectedLabel || '');
     setFieldValue(`${name}Id`, selectedEmployee ? String(selectedEmployee.value) : '');
     setFieldTouched(name, true);
     setFieldTouched(`${name}Id`, true);
-    
+   
     // Clear persistent error only for this specific field
     if (selectedLabel && selectedLabel.trim() !== '') {
       setPersistentErrors(prev => {
@@ -360,17 +468,17 @@ const ConcessionInfoSection = ({
       });
     }
   };
-
+ 
   const handleReasonChange = (e) => {
     const selectedLabel = e.target.value;
     const selectedReason = reasonOptions.find((opt) => opt.label === selectedLabel);
     console.log(`🎯 handleReasonChange:`, { selectedLabel, selectedReason });
-    
+   
     setFieldValue("reason", selectedLabel || '');
     setFieldValue("concessionReasonId", selectedReason ? String(selectedReason.value) : '');
     setFieldTouched("reason", true);
     setFieldTouched("concessionReasonId", true);
-    
+   
     // Clear persistent error only for this specific field
     if (selectedLabel && selectedLabel.trim() !== '') {
       setPersistentErrors(prev => {
@@ -382,12 +490,12 @@ const ConcessionInfoSection = ({
       });
     }
   };
-
+ 
   const handleApplyCoupon = () => {
     setCouponDetails({ mobile: values.mobileNumber || "", code: values.coupon || "" });
     onCouponSubmit();
   };
-
+ 
   const handleSubmit = async () => {
     console.log("=== Validation Debug ===");
     console.log("Current values:", values);
@@ -404,7 +512,7 @@ const ConcessionInfoSection = ({
       reason: values.reason,
       concessionReasonId: values.concessionReasonId
     });
-    
+   
     // Log complete form data object
     console.log("🚀 ===== CONCESSION - FINAL SUBMITTING OBJECT =====");
     console.log("📋 Complete Form Data:", JSON.stringify(values, null, 2));
@@ -419,28 +527,28 @@ const ConcessionInfoSection = ({
       console.log(`  ${key}:`, value);
     });
     console.log("🚀 ===== END CONCESSION OBJECT =====");
-    
+   
     const errors = await validateForm();
     console.log("Validation errors:", errors);
-    
+   
     const touchedFields = Object.keys(errors).reduce((acc, field) => {
       acc[field] = true;
       return acc;
     }, {});
     setFieldTouched(touchedFields);
-    
+   
     if (Object.keys(errors).length === 0) {
       handleNext();
     } else {
       console.log("Validation failed, errors:", errors);
     }
   };
-
+ 
   // Form is now always rendered, dropdowns load in background
   if (error) {
     return <div className={styles.Concession_Info_Section_error}>{error}</div>;
   }
-
+ 
   return (
     <div className={styles.Concession_Info_Section_concessionsContainer}>
       <div className={styles.Concession_Info_Section_applyCoupon}>
@@ -520,9 +628,9 @@ const ConcessionInfoSection = ({
                 onChange={handleSectionChange}
               />
             )}
-            {(touched[field.name] && (errors[field.name] || errors[`${field.name}Id`])) || persistentErrors[field.name] || persistentErrors[`${field.name}Id`] ? (
+            {shouldShowError(field.name) || (touched[field.name] && (errors[field.name] || errors[`${field.name}Id`])) || persistentErrors[field.name] || persistentErrors[`${field.name}Id`] ? (
               <div className={styles.Concession_Info_Section_concessionError}>
-                {errors[field.name] || errors[`${field.name}Id`] || persistentErrors[field.name] || persistentErrors[`${field.name}Id`]}
+                {getFieldError(field.name) || errors[field.name] || errors[`${field.name}Id`] || persistentErrors[field.name] || persistentErrors[`${field.name}Id`]}
               </div>
             ) : null}
           </div>
@@ -612,7 +720,7 @@ const ConcessionInfoSection = ({
         className={styles.concessionLinkButton}
         onClick={async (e) => {
           e.preventDefault();
-          
+         
           // Log complete form data object for skip to payments
           console.log("🚀 ===== CONCESSION SKIP TO PAYMENTS - FINAL SUBMITTING OBJECT =====");
           console.log("📋 Complete Form Data:", JSON.stringify(values, null, 2));
@@ -627,7 +735,7 @@ const ConcessionInfoSection = ({
             console.log(`  ${key}:`, value);
           });
           console.log("🚀 ===== END CONCESSION SKIP TO PAYMENTS OBJECT =====");
-          
+         
           const errors = await validateForm();
           const touchedFields = Object.keys(errors).reduce((acc, field) => {
             acc[field] = true;
@@ -654,10 +762,10 @@ const ConcessionInfoSection = ({
     </div>
   );
 };
-
+ 
 // Create the final validation schema that combines base schema with custom validation
 const concessionValidationSchema = baseValidationSchema;
-
+ 
 ConcessionInfoSection.validationSchema = concessionValidationSchema;
-
+ 
 export default ConcessionInfoSection;

@@ -8,7 +8,7 @@ import { ReactComponent as Add } from "../../../assets/application-status/si_add
 import { ReactComponent as UploadIcon } from "../../../assets/application-status/Upload.svg";
 import * as Yup from "yup";
 import styles from "./SiblingInfoSection.module.css";
-
+ 
 const siblingValidationSchema = Yup.array().of(
   Yup.object().shape({
     fullName: Yup.string()
@@ -20,7 +20,7 @@ const siblingValidationSchema = Yup.array().of(
     gender: Yup.string().required("Gender is required"),
   })
 ).nullable();
-
+ 
 const SiblingInfoSection = ({
   values,
   errors,
@@ -32,7 +32,7 @@ const SiblingInfoSection = ({
 }) => {
   const [showSiblings, setShowSiblings] = useState(false);
   const [localErrors, setLocalErrors] = useState({});
-
+ 
   // When all siblings are removed, revert to the initial CTA view
   useEffect(() => {
     const count = Array.isArray(values.siblingInformation) ? values.siblingInformation.length : 0;
@@ -40,7 +40,7 @@ const SiblingInfoSection = ({
       setShowSiblings(false);
     }
   }, [values.siblingInformation?.length]);
-
+ 
   // Local validation function for sibling fields
   const validateSiblingField = async (fieldName, value) => {
     try {
@@ -59,23 +59,23 @@ const SiblingInfoSection = ({
       }));
     }
   };
-
+ 
   // Helper function to check if a field should show an error
   const shouldShowSiblingError = (fieldName) => {
     return touched[fieldName] && (errors[fieldName] || localErrors[fieldName]);
   };
-
+ 
   // Helper function to get the error message for a field
   const getSiblingFieldError = (fieldName) => {
     return errors[fieldName] || localErrors[fieldName];
   };
-
+ 
   const handleRemoveAnnexure = (index) => {
     const updatedFiles = values.annexure.filter((_, i) => i !== index);
     setFieldValue("annexure", updatedFiles);
     setFieldTouched("annexure", true);
   };
-
+ 
   return (
     <FieldArray name="siblingInformation">
       {({ push, remove }) => (
@@ -147,7 +147,9 @@ const SiblingInfoSection = ({
                           <Dropdown
                             dropdownname="Relation Type"
                             name={`siblingInformation.${i}.relationType`}
-                            results={dropdownOptions.relationTypes.map((opt) => opt.label)}
+                            results={dropdownOptions.relationTypes
+                              .filter((opt) => !['Father', 'Mother', 'Guardian'].includes(opt.label))
+                              .map((opt) => opt.label)}
                             value={dropdownOptions.relationTypes.find((opt) => opt.id === sibling.relationType)?.label || ""}
                             onChange={(e) => {
                               const selectedLabel = e.target.value;
@@ -381,6 +383,6 @@ const SiblingInfoSection = ({
     </FieldArray>
   );
 };
-
+ 
 SiblingInfoSection.validationSchema = siblingValidationSchema;
 export default SiblingInfoSection;

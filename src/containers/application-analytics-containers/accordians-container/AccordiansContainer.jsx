@@ -13,9 +13,9 @@ const AccordiansContainer = () => {
         { label: "Sold", percent: -12 },
       ],
       graphBarData: [
-        { year: "2018-2019", issued: 60, sold: 100 },
+        { year: "2018-2019", issued: 60, sold: 30},
         { year: "2019-2020", issued: 100, sold: 70 },
-        { year: "2021-2022", issued: 100, sold: 30 },
+        { year: "2021-2022", issued: 90, sold: 30 },
         { year: "2023-2024", issued: 100, sold: 60 },
       ],
     },
@@ -26,9 +26,9 @@ const AccordiansContainer = () => {
         { label: "Sold", percent: -12 },
       ],
       graphBarData: [
-        { year: "2018-2019", issued: 60, sold: 100 },
+        { year: "2018-2019", issued: 60, sold: 50 },
         { year: "2019-2020", issued: 100, sold: 70 },
-        { year: "2021-2022", issued: 100, sold: 30 },
+        { year: "2021-2022", issued: 80, sold: 30 },
         { year: "2023-2024", issued: 100, sold: 60 },
       ],
     },

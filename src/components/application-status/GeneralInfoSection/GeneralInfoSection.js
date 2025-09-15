@@ -1,8 +1,10 @@
-
 import { Button as MuiButton } from "@mui/material";
 import { useFormikContext } from "formik";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
+import Button from "../../../widgets/Button/Button";
+import Dropdown from "../../../widgets/Dropdown/Dropdown";
+import Inputbox from "../../../widgets/Inputbox/InputBox";
 import Asterisk from "../../../assets/application-status/Asterisk";
 import CashIcon from "../../../assets/application-status/Cash (1).svg";
 import DDIcon from "../../../assets/application-status/DD (1).svg";
@@ -12,9 +14,6 @@ import SkipIcon from "../../../assets/application-status/SkipIcon.svg";
 import { ReactComponent as TrendingUpIcon } from "../../../assets/application-status/Trending up.svg";
 import { ReactComponent as UploadIcon } from "../../../assets/application-status/Upload.svg";
 import apiService from "../../../queries/application-status/SaleFormapis";
-import Button from "../../../widgets/Button/Button";
-import Dropdown from "../../../widgets/Dropdown/Dropdown";
-import Inputbox from "../../../widgets/Inputbox/InputBox";
 import SiblingInfoSection from "../SiblingInfoSection/SiblingInfoSection";
 import styles from "./GeneralInfoSection.module.css";
 
@@ -51,7 +50,17 @@ const validationSchema = Yup.object().shape({
       return adjustedAge >= 5 && adjustedAge <= 18;
     }),
   gender: Yup.string().required("Gender is required"),
-  joinedCampus: Yup.string().required("Joined Campus is required"),
+  studentType: Yup.string().required("Student Type is required"),
+  joinedCampus: Yup.string()
+    .required("Joined Campus/Branch is required")
+    .test('campus-validation', 'Joined Campus/Branch is required', function(value) {
+      // Always require a valid selection - even if pre-filled, it must be a proper selection
+      if (!value || value.trim() === '' || value === 'Select Joined Campus/Branch') {
+        return false;
+      }
+      return true;
+    }),
+  batchType: Yup.string().required("Batch Type is required"),
   joiningClassName: Yup.string().required("Joining Class is required"), // Changed from joinInto
   orientationName: Yup.string().required("Orientation is required"), // Changed from course
   orientationBatch: Yup.string().required("Course Batch is required"), // Changed from orientationBatch
@@ -61,10 +70,40 @@ const validationSchema = Yup.object().shape({
   schoolState: Yup.string().required("School State is required"),
   schoolDistrict: Yup.string().required("School District is required"),
   schoolType: Yup.string().required("School Type is required"),
-  marks: Yup.string().required("Marks is required"),
+  marks: Yup.string().notRequired(),
   appFee: Yup.string().matches(/^\d*$/, "Application Fee must be numeric").notRequired(), // Changed label to match flatfields
   fee: Yup.string().matches(/^\d*$/, "Fee must be numeric").notRequired(),
-  additionalCourseFee: Yup.string().matches(/^\d*$/, "Additional Course Fee must be numeric").notRequired(), // Changed from additionalOrientationFee
+  additionalOrientationFee: Yup.string()
+    .matches(/^\d*$/, "Additional Orientation Fee must be numeric")
+    .test('max-half-orientation-fee', 'Additional Orientation Fee must be below 50% of the Orientation Fee', function(value) {
+      const { parent } = this;
+      const orientationFee = parent.OrientationFee;
+     
+      console.log('🔍 Validation check:', { value, orientationFee, parent });
+     
+      if (!value || !orientationFee) return true; // Allow empty values or if orientation fee is not set
+     
+      // Handle very large numbers
+      if (value.length > 10) {
+        console.log('❌ Value too long for reasonable fee amount');
+        return this.createError({ message: 'Additional Orientation Fee value is too large' });
+      }
+     
+      const additionalFee = parseFloat(value) || 0;
+      const orientationFeeValue = parseFloat(orientationFee) || 0;
+      const maxAllowed = Math.floor(orientationFeeValue / 2); // Use Math.floor to ensure it's below 50%
+     
+      console.log('🔍 Validation calculation:', { additionalFee, orientationFeeValue, maxAllowed, isValid: additionalFee <= maxAllowed });
+     
+      if (additionalFee > maxAllowed) {
+        return this.createError({
+          message: `Additional Orientation Fee must be below 50% of the Orientation Fee (Max: ${maxAllowed})`
+        });
+      }
+     
+      return true;
+    })
+    .notRequired(),
   scoreAppNo: Yup.string().matches(/^\d*$/, "Score App No must be numeric").notRequired(),
   admissionReferredBy: Yup.string().notRequired(),
   quota: Yup.string().notRequired(),
@@ -131,15 +170,15 @@ const GeneralInfoSection = ({
   // Helper function to format date values for display
   const formatDateForDisplay = (dateValue, fieldName) => {
     if (!dateValue) return "";
-    
+   
     console.log(`📍 formatDateForDisplay called with:`, { dateValue, fieldName, type: typeof dateValue });
-    
+   
     // If it's already in yyyy-mm-dd format, return as is
     if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
       console.log(`📍 Date already in yyyy-mm-dd format:`, dateValue);
       return dateValue;
     }
-    
+   
     // If it's a date object or ISO string, convert to yyyy-mm-dd
     const date = new Date(dateValue);
     if (!isNaN(date.getTime())) {
@@ -147,9 +186,36 @@ const GeneralInfoSection = ({
       console.log(`📍 Converted date to yyyy-mm-dd:`, formatted);
       return formatted;
     }
-    
+   
     console.log(`📍 Could not format date, returning original:`, dateValue);
     return dateValue;
+  };
+
+  // Helper function to get maximum allowed additional orientation fee
+  const getMaxAdditionalOrientationFee = () => {
+    const orientationFee = values.OrientationFee;
+    if (!orientationFee) return null;
+   
+    const orientationFeeValue = parseFloat(orientationFee) || 0;
+    return Math.floor(orientationFeeValue / 2); // Use Math.floor to ensure it's below 50%
+  };
+
+  // Helper function to check if additional orientation fee exceeds limit
+  const getAdditionalOrientationFeeError = () => {
+    const additionalFee = values.additionalOrientationFee;
+    const orientationFee = values.OrientationFee;
+   
+    if (!additionalFee || !orientationFee) return null;
+   
+    const additionalFeeValue = parseFloat(additionalFee) || 0;
+    const orientationFeeValue = parseFloat(orientationFee) || 0;
+    const maxAllowed = Math.floor(orientationFeeValue / 2);
+   
+    if (additionalFeeValue > maxAllowed) {
+      return `Additional orientation fee cannot exceed 50% of orientation fee (Max: ${maxAllowed})`;
+    }
+   
+    return null;
   };
   const [dropdownOptions, setDropdownOptions] = useState({
     appTypes: [],
@@ -215,11 +281,11 @@ const GeneralInfoSection = ({
   useEffect(() => {
     const fetchDropdownOptions = async () => {
       console.log("🔄 Starting to fetch dropdown options from API...");
-      
+     
       // Set parent name IDs
       setFieldValue("fatherNameId", "1");
       setFieldValue("motherNameId", "2");
-      
+     
       // Define all API calls with their corresponding keys
       const apiCalls = [
         { key: 'appTypes', call: () => apiService.fetchAdmissionTypes() },
@@ -253,7 +319,7 @@ const GeneralInfoSection = ({
         try {
           const data = await call();
           console.log(`🔍 Raw data for ${key}:`, data);
-          
+         
           // Handle different data structures
           let processedData = data;
           if (!Array.isArray(data)) {
@@ -263,23 +329,23 @@ const GeneralInfoSection = ({
               processedData = [];
             }
           }
-          
+         
           const mappedData = processedData.map((item) => {
             // Handle different field names for different APIs
             let id = item?.id || item?.stateId || item?.classId || item?.orientationId || item?.batchId;
             let label = item?.name || item?.stateName || item?.className || item?.orientationName || item?.batchName || item?.label;
-            
+           
             return {
               id: id?.toString() || "",
               label: label || String(item),
             };
           });
-          
+         
           console.log(`🔍 Mapped data for ${key}:`, mappedData);
 
           // Special handling for cities
-          const finalData = key === 'cities' && mappedData.length === 0 
-            ? [{ id: "", label: "No cities available" }] 
+          const finalData = key === 'cities' && mappedData.length === 0
+            ? [{ id: "", label: "No cities available" }]
             : mappedData;
 
           setDropdownOptions(prev => ({
@@ -306,7 +372,7 @@ const GeneralInfoSection = ({
         }
       });
     };
-    
+   
     fetchDropdownOptions();
   }, [setFieldValue]);
 
@@ -331,7 +397,10 @@ const GeneralInfoSection = ({
     { label: "Profile Photo", name: "profilePhoto", type: "file", accept: "image/jpeg,image/jpg,image/png" },
     { label: "Father Name ID", name: "fatherNameId", type: "hidden" },
     { label: "Mother Name ID", name: "motherNameId", type: "hidden" },
-    { label: "Category", name: "category", type: "radio", options: ["SSC", "Other"], required: true },
+    { label: "Category", name: "category", type: "radio", options: [
+      { value: 1, label: "SSC" },
+      { value: 2, label: "Other" }
+    ], required: true },
     { label: "HT No", name: "htNo", placeholder: "Enter Hall Ticket No" },
     { label: "Aadhar Card No", name: "aadhar", placeholder: "Enter Aaadhar Number", required: true },
     { label: "Aapar Number", name: "aapar", placeholder: "Enter Apaar Number" },
@@ -352,7 +421,7 @@ const GeneralInfoSection = ({
     { label: "Phone Number", name: "motherPhoneNumber", placeholder: "Enter Phone Number", required: true },
     { label: "Email Id", name: "motherEmail", placeholder: "Enter Mother Mail id" },
     { label: "Orientation Information", name: "orientationInformation", type: "custom" },
-    { label: "Student Type", name: "studentType", type: "select", options: dropdownOptions.studentTypes },
+    { label: "Student Type", name: "studentType", type: "select", options: dropdownOptions.studentTypes, required: true },
     { label: "Date of Birth", name: "dob", type: "date", required: true },
     { label: "Gender", name: "gender", type: "radio", options: dropdownOptions.genders, required: true },
     { label: "Joined Campus/Branch", name: "joinedCampus", type: "select", options: dropdownOptions.campuses, required: true },
@@ -369,7 +438,7 @@ const GeneralInfoSection = ({
     { label: "School Name", name: "schoolName", placeholder: "Enter School Name" },
     { label: "Additional Orientation Fee", name: "additionalOrientationFee", placeholder: "Enter Fee Details" },
     { label: "Score App No", name: "scoreAppNo", placeholder: "Enter Score App No" },
-    { label: "Marks", name: "marks", placeholder: "Enter Marks Details", required: true },
+    { label: "Marks", name: "marks", placeholder: "Enter Marks Details" },
     { label: "Admission Referred By", name: "admissionReferredBy", placeholder: "Enter Name" },
     { label: "Quota", name: "quota", type: "select", options: dropdownOptions.quotas },
   ];
@@ -427,18 +496,37 @@ const GeneralInfoSection = ({
       } else {
         finalValue = value;
       }
-    } else if (["htNo", "appFee", "fee", "additionalCourseFee", "scoreAppNo", "marks", "aadhar", "fatherPhoneNumber", "motherPhoneNumber"].includes(name)) {
+    } else if (["htNo", "appFee", "fee", "additionalOrientationFee", "scoreAppNo", "marks", "aadhar", "fatherPhoneNumber", "motherPhoneNumber"].includes(name)) {
       finalValue = value.replace(/\D/g, "");
       if (name === "aadhar" && finalValue.length > 12) {
         finalValue = finalValue.slice(0, 12);
       } else if (["fatherPhoneNumber", "motherPhoneNumber"].includes(name) && finalValue.length > 10) {
         finalValue = finalValue.slice(0, 10);
       }
+     
+      // Real-time validation for additional orientation fee
+      if (name === "additionalOrientationFee") {
+        const orientationFee = values.OrientationFee;
+        if (finalValue && orientationFee) {
+          const additionalFee = parseFloat(finalValue) || 0;
+          const orientationFeeValue = parseFloat(orientationFee) || 0;
+          const maxAllowed = Math.floor(orientationFeeValue / 2); // Use Math.floor to ensure it's below 50%
+         
+          console.log(`🔍 Real-time validation:`, { additionalFee, orientationFeeValue, maxAllowed });
+         
+          if (additionalFee > maxAllowed) {
+            console.log(`⚠️ Additional orientation fee (${additionalFee}) exceeds 50% of orientation fee (max allowed: ${maxAllowed})`);
+            // Let the user type freely, error message will show below the input
+          }
+        }
+      }
     } else if (
       [
         "studentName",
-        "schoolName",
+        "firstName",
         "surname",
+        "schoolName",
+     
         "fatherName",
         "motherName",
         "fatherOccupation",
@@ -453,7 +541,7 @@ const GeneralInfoSection = ({
     console.log(`📍 ${name} changed to:`, finalValue);
     setFieldValue(name, finalValue);
     setFieldTouched(name, true);
-    
+   
     // Clear persistent error for this field if it has a valid value
     if (finalValue && finalValue.toString().trim() !== "") {
       setPersistentErrors(prev => {
@@ -462,7 +550,7 @@ const GeneralInfoSection = ({
         return newErrors;
       });
     }
-    
+   
     // Also clear persistent errors for nested sibling fields
     if (name.includes('siblingInformation') && finalValue && finalValue.toString().trim() !== "") {
       setPersistentErrors(prev => {
@@ -476,13 +564,13 @@ const GeneralInfoSection = ({
       console.log("🎯 School State changed:", { name, stateId, finalValue });
       console.log("🎯 Current school states options:", dropdownOptions.schoolStates);
       console.log("🎯 Selected state option:", dropdownOptions.schoolStates.find(opt => opt.id === stateId));
-      
+     
       if (stateId) {
         console.log("🔄 Fetching school districts for state:", stateId);
         console.log("🔄 API URL will be:", `http://localhost:8080/distribution/gets/districts/${stateId}`);
         apiService.fetchSchoolDistricts(stateId).then((districts) => {
           console.log("📍 Raw school districts response:", districts);
-          
+         
           // Handle different data structures
           let processedDistricts = districts;
           if (!Array.isArray(districts)) {
@@ -492,12 +580,12 @@ const GeneralInfoSection = ({
               processedDistricts = [];
             }
           }
-          
+         
           const mappedDistricts = processedDistricts.map((item) => ({
             id: (item?.id || item?.districtId)?.toString() || "",
             label: item?.name || item?.districtName || item?.label || String(item)
           }));
-          
+         
           console.log("📍 Mapped school districts:", mappedDistricts);
           setDropdownOptions((prev) => {
             const newOptions = {
@@ -524,20 +612,20 @@ const GeneralInfoSection = ({
         setFieldTouched("schoolDistrict", true);
       }
     }
-    
+   
     // Handle campus change for joining classes (Step 1: Campus → Joining Class)
     if (name === "joinedCampus") {
       const campusId = finalValue;
       console.log("🎯 Campus changed:", { name, campusId, finalValue });
-      
+     
       if (campusId) {
         // Set loading state
         setLoadingStates(prev => ({ ...prev, joiningClasses: true }));
-        
+       
         console.log("🔄 Fetching joining classes for campus:", campusId);
         apiService.fetchClassesByCampus(campusId).then((classes) => {
           console.log("📍 Raw joining classes response:", classes);
-          
+         
           // Handle different data structures
           let processedClasses = classes;
           if (!Array.isArray(classes)) {
@@ -547,12 +635,12 @@ const GeneralInfoSection = ({
               processedClasses = [];
             }
           }
-          
+         
           const mappedClasses = processedClasses.map((item) => ({
             id: (item?.id || item?.classId)?.toString() || "",
             label: item?.name || item?.className || item?.label || String(item)
           }));
-          
+         
           console.log("📍 Mapped joining classes:", mappedClasses);
           setDropdownOptions((prev) => ({
             ...prev,
@@ -562,7 +650,7 @@ const GeneralInfoSection = ({
             orientationNames: [],
             orientationBatchesCascading: []
           }));
-          
+         
           // Clear dependent fields
           setFieldValue("joiningClassName", "");
           setFieldValue("batchType", "");
@@ -570,7 +658,7 @@ const GeneralInfoSection = ({
           setFieldValue("orientationBatch", "");
           setFieldValue("orientationDates", "");
           setFieldValue("OrientationFee", "");
-          
+         
           setLoadingStates(prev => ({ ...prev, joiningClasses: false }));
         }).catch((err) => {
           console.error("❌ Failed to fetch joining classes:", err);
@@ -578,8 +666,8 @@ const GeneralInfoSection = ({
         });
       } else {
         console.log("🧹 Clearing joining classes as no campus selected");
-        setDropdownOptions((prev) => ({ 
-          ...prev, 
+        setDropdownOptions((prev) => ({
+          ...prev,
           joiningClasses: [],
           batchTypes: [],
           orientationNames: [],
@@ -593,20 +681,20 @@ const GeneralInfoSection = ({
         setFieldValue("OrientationFee", "");
       }
     }
-    
+   
     // Handle joining class change for batch types (Step 2: Campus + Class → Batch Type)
     if (name === "joiningClassName") {
       const classId = finalValue;
       const campusId = values.joinedCampus;
       console.log("🎯 Joining class changed:", { name, classId, campusId });
-      
+     
       if (campusId && classId) {
         setLoadingStates(prev => ({ ...prev, batchTypes: true }));
-        
+       
         console.log("🔄 Fetching batch types for campus and class:", { campusId, classId });
         apiService.fetchBatchTypeByCampusAndClass(campusId, classId).then((batchTypes) => {
           console.log("📍 Raw batch types response:", batchTypes);
-          
+         
           let processedBatchTypes = batchTypes;
           if (!Array.isArray(batchTypes)) {
             if (batchTypes && typeof batchTypes === 'object') {
@@ -615,12 +703,12 @@ const GeneralInfoSection = ({
               processedBatchTypes = [];
             }
           }
-          
+         
           const mappedBatchTypes = processedBatchTypes.map((item) => ({
             id: (item?.id || item?.studyTypeId)?.toString() || "",
             label: item?.name || item?.studyTypeName || item?.label || String(item)
           }));
-          
+         
           console.log("📍 Mapped batch types:", mappedBatchTypes);
           setDropdownOptions((prev) => ({
             ...prev,
@@ -629,14 +717,14 @@ const GeneralInfoSection = ({
             orientationNames: [],
             orientationBatchesCascading: []
           }));
-          
+         
           // Clear dependent fields
           setFieldValue("batchType", "");
           setFieldValue("orientationName", "");
           setFieldValue("orientationBatch", "");
           setFieldValue("orientationDates", "");
           setFieldValue("OrientationFee", "");
-          
+         
           setLoadingStates(prev => ({ ...prev, batchTypes: false }));
         }).catch((error) => {
           console.error("❌ Error fetching batch types:", error);
@@ -644,8 +732,8 @@ const GeneralInfoSection = ({
         });
       } else {
         console.log("🧹 Clearing batch types as campus or class not selected");
-        setDropdownOptions((prev) => ({ 
-          ...prev, 
+        setDropdownOptions((prev) => ({
+          ...prev,
           batchTypes: [],
           orientationNames: [],
           orientationBatchesCascading: []
@@ -657,21 +745,21 @@ const GeneralInfoSection = ({
         setFieldValue("OrientationFee", "");
       }
     }
-    
+   
     // Handle batch type change for orientation names (Step 3: Campus + Class + Batch Type → Orientation Name)
     if (name === "batchType") {
       const studyTypeId = finalValue;
       const campusId = values.joinedCampus;
       const classId = values.joiningClassName;
       console.log("🎯 Batch type changed:", { name, studyTypeId, campusId, classId });
-      
+     
       if (campusId && classId && studyTypeId) {
         setLoadingStates(prev => ({ ...prev, orientationNames: true }));
-        
+       
         console.log("🔄 Fetching orientation names for campus, class, and batch type:", { campusId, classId, studyTypeId });
         apiService.fetchOrientationNameByCampusClassAndStudyType(campusId, classId, studyTypeId).then((orientations) => {
           console.log("📍 Raw orientation names response:", orientations);
-          
+         
           let processedOrientations = orientations;
           if (!Array.isArray(orientations)) {
             if (orientations && typeof orientations === 'object') {
@@ -680,12 +768,12 @@ const GeneralInfoSection = ({
               processedOrientations = [];
             }
           }
-          
+         
           const mappedOrientations = processedOrientations.map((item) => ({
             id: (item?.id || item?.orientationId)?.toString() || "",
             label: item?.name || item?.orientationName || item?.label || String(item)
           }));
-          
+         
           console.log("📍 Mapped orientation names:", mappedOrientations);
           setDropdownOptions((prev) => ({
             ...prev,
@@ -693,13 +781,13 @@ const GeneralInfoSection = ({
             // Clear dependent dropdowns
             orientationBatchesCascading: []
           }));
-          
+         
           // Clear dependent fields
           setFieldValue("orientationName", "");
           setFieldValue("orientationBatch", "");
           setFieldValue("orientationDates", "");
           setFieldValue("OrientationFee", "");
-          
+         
           setLoadingStates(prev => ({ ...prev, orientationNames: false }));
         }).catch((error) => {
           console.error("❌ Error fetching orientation names:", error);
@@ -707,8 +795,8 @@ const GeneralInfoSection = ({
         });
       } else {
         console.log("🧹 Clearing orientation names as required fields not selected");
-        setDropdownOptions((prev) => ({ 
-          ...prev, 
+        setDropdownOptions((prev) => ({
+          ...prev,
           orientationNames: [],
           orientationBatchesCascading: []
         }));
@@ -718,7 +806,7 @@ const GeneralInfoSection = ({
         setFieldValue("OrientationFee", "");
       }
     }
-    
+   
     // Handle orientation name change for orientation batches (Step 4: All fields → Orientation Batch)
     if (name === "orientationName") {
       const orientationId = finalValue;
@@ -726,14 +814,14 @@ const GeneralInfoSection = ({
       const classId = values.joiningClassName;
       const studyTypeId = values.batchType;
       console.log("🎯 Orientation name changed:", { name, orientationId, campusId, classId, studyTypeId });
-      
+     
       if (campusId && classId && studyTypeId && orientationId) {
         setLoadingStates(prev => ({ ...prev, orientationBatchesCascading: true }));
-        
+       
         console.log("🔄 Fetching orientation batches for all fields:", { campusId, classId, studyTypeId, orientationId });
         apiService.fetchOrientationBatchByAllFields(campusId, classId, studyTypeId, orientationId).then((batches) => {
           console.log("📍 Raw orientation batches response:", batches);
-          
+         
           let processedBatches = batches;
           if (!Array.isArray(batches)) {
             if (batches && typeof batches === 'object') {
@@ -742,23 +830,23 @@ const GeneralInfoSection = ({
               processedBatches = [];
             }
           }
-          
+         
           const mappedBatches = processedBatches.map((item) => ({
             id: (item?.id || item?.orientationBatchId)?.toString() || "",
             label: item?.name || item?.batchName || item?.label || String(item)
           }));
-          
+         
           console.log("📍 Mapped orientation batches:", mappedBatches);
           setDropdownOptions((prev) => ({
             ...prev,
             orientationBatchesCascading: mappedBatches
           }));
-          
+         
           // Clear dependent fields
           setFieldValue("orientationBatch", "");
           setFieldValue("orientationDates", "");
           setFieldValue("OrientationFee", "");
-          
+         
           setLoadingStates(prev => ({ ...prev, orientationBatchesCascading: false }));
         }).catch((error) => {
           console.error("❌ Error fetching orientation batches:", error);
@@ -766,8 +854,8 @@ const GeneralInfoSection = ({
         });
       } else {
         console.log("🧹 Clearing orientation batches as required fields not selected");
-        setDropdownOptions((prev) => ({ 
-          ...prev, 
+        setDropdownOptions((prev) => ({
+          ...prev,
           orientationBatchesCascading: []
         }));
         setFieldValue("orientationBatch", "");
@@ -775,7 +863,7 @@ const GeneralInfoSection = ({
         setFieldValue("OrientationFee", "");
       }
     }
-    
+   
     // Handle orientation batch change for auto-population (Step 5: All fields → Auto-populate)
     if (name === "orientationBatch") {
       const orientationBatchId = finalValue;
@@ -784,24 +872,24 @@ const GeneralInfoSection = ({
       const studyTypeId = values.batchType;
       const orientationId = values.orientationName;
       console.log("🎯 Orientation batch changed:", { name, orientationBatchId, campusId, classId, studyTypeId, orientationId });
-      
+     
       if (campusId && classId && studyTypeId && orientationId && orientationBatchId) {
         console.log("🔄 Fetching orientation details for auto-population:", { campusId, classId, studyTypeId, orientationId, orientationBatchId });
         apiService.fetchOrientationStartDateAndFee(campusId, classId, studyTypeId, orientationId, orientationBatchId).then((details) => {
           console.log("📍 Raw orientation details response:", details);
           console.log("📍 Response type:", typeof details);
           console.log("📍 Response keys:", details ? Object.keys(details) : "No keys");
-          
+         
           // Auto-populate orientation start date and fee
           if (details) {
             console.log("📍 Checking for startDate in details:", details.startDate);
             console.log("📍 Checking for orientationStartDate in details:", details.orientationStartDate);
             console.log("📍 Checking for date in details:", details.date);
-            
+           
             // Try multiple possible field names for the date
             let dateValue = details.startDate || details.orientationStartDate || details.date || details.orientation_date || details.batchStartDate;
             console.log("📍 Extracted date value:", dateValue);
-            
+           
             if (dateValue) {
               // Format the date to yyyy-mm-dd for HTML date input
               const formattedDate = formatDateForDisplay(dateValue, "orientationDates");
@@ -811,11 +899,11 @@ const GeneralInfoSection = ({
             } else {
               console.log("❌ No date value found in response");
             }
-            
+           
             // Try multiple possible field names for the fee
             let feeValue = details.fee || details.orientationFee || details.orientation_fee || details.batchFee;
             console.log("📍 Extracted fee value:", feeValue);
-            
+           
             if (feeValue) {
               setFieldValue("OrientationFee", feeValue);
               console.log("✅ Auto-populated orientation fee:", feeValue);
@@ -830,7 +918,7 @@ const GeneralInfoSection = ({
         });
       }
     }
-    
+   
     // Handle other field changes (existing logic)
     if (name === "orientationName" && false) { // Disabled to avoid duplicate
       const orientationId = finalValue;
@@ -842,7 +930,7 @@ const GeneralInfoSection = ({
         setLoadingStates(prev => ({ ...prev, orientationBatches: true }));
         apiService.fetchOrientationBatches(campusId, classId, orientationId).then((batches) => {
           console.log("📍 Raw orientation batches response:", batches);
-          
+         
           // Handle different data structures
           let processedBatches = batches;
           if (!Array.isArray(batches)) {
@@ -852,12 +940,12 @@ const GeneralInfoSection = ({
               processedBatches = [];
             }
           }
-          
+         
           const mappedBatches = processedBatches.map((item) => ({
             id: (item?.id || item?.batchId)?.toString() || "",
             label: item?.name || item?.batchName || item?.label || String(item)
           }));
-          
+         
           console.log("📍 Mapped orientation batches:", mappedBatches);
           setDropdownOptions((prev) => {
             const newOptions = {
@@ -884,7 +972,7 @@ const GeneralInfoSection = ({
         setFieldTouched("orientationBatch", true);
       }
     }
-    
+   
     // Handle orientation batch change for details
     if (name === "orientationBatch") {
       const orientationId = values.orientationName;
@@ -893,31 +981,31 @@ const GeneralInfoSection = ({
       const classId = values.joiningClassName;
       console.log("🎯 Orientation Batch changed:", { name, orientationId, batchId, campusId, classId, finalValue });
       console.log("🎯 Current form values:", values);
-      
+     
       if (orientationId && batchId && campusId && classId) {
         console.log("🔄 Fetching orientation details for campus:", campusId, "class:", classId, "orientation:", orientationId, "and batch:", batchId);
         console.log("🔄 API URL will be:", `http://localhost:8080/api/student-admissions-sale/${campusId}/${classId}/${orientationId}/${batchId}/details`);
-        
+       
         apiService.fetchOrientationDetails(campusId, classId, orientationId, batchId).then((details) => {
           console.log("📍 Raw orientation details response:", details);
           console.log("📍 Response type:", typeof details);
           console.log("📍 Response keys:", details ? Object.keys(details) : "No response");
           console.log("📍 Full response structure:", JSON.stringify(details, null, 2));
-          
+         
           // Auto-populate orientation dates and fees
           if (details) {
             console.log("📍 Processing orientation details:", details);
-            
+           
             // Try multiple possible field names for date (prioritizing start date fields)
             const possibleDateFields = [
-              'startDate', 
-              'orientationStartDate', 
-              'batchStartDate', 
-              'start_date', 
-              'orientationStartDate', 
+              'startDate',
+              'orientationStartDate',
               'batchStartDate',
-              'orientationDate', 
-              'date', 
+              'start_date',
+              'orientationStartDate',
+              'batchStartDate',
+              'orientationDate',
+              'date',
               'orientation_date',
               'endDate',
               'orientationEndDate',
@@ -931,10 +1019,10 @@ const GeneralInfoSection = ({
                 break;
               }
             }
-            
+           
             if (dateValue) {
               console.log("📍 Raw orientation date from API:", dateValue);
-              
+             
               // Convert ISO date to yyyy-MM-dd format for HTML date input
               let formattedDate = dateValue;
               if (typeof dateValue === 'string' && dateValue.includes('T')) {
@@ -946,14 +1034,14 @@ const GeneralInfoSection = ({
                 formattedDate = dateValue.toISOString().split('T')[0];
                 console.log("📍 Converted Date object to format:", formattedDate);
               }
-              
+             
               console.log("📍 Setting orientation date:", formattedDate);
               setFieldValue("orientationDates", formattedDate);
               console.log("✅ Orientation date set successfully");
             } else {
               console.log("⚠️ No date field found in response. Available fields:", Object.keys(details));
             }
-            
+           
             // Try multiple possible field names for fee
             const possibleFeeFields = ['fee', 'orientationFee', 'amount', 'orientationAmount', 'batchFee', 'orientation_fee', 'batch_fee'];
             let feeValue = null;
@@ -964,7 +1052,7 @@ const GeneralInfoSection = ({
                 break;
               }
             }
-            
+           
             if (feeValue) {
               console.log("📍 Setting orientation fee:", feeValue);
               setFieldValue("OrientationFee", feeValue.toString());
@@ -988,13 +1076,13 @@ const GeneralInfoSection = ({
         console.log("⚠️ Current finalValue (batchId):", finalValue);
       }
     }
-    if (["appFee", "fee", "additionalCourseFee"].includes(name)) {
+    if (["appFee", "fee", "additionalOrientationFee"].includes(name)) {
       const fees = {
         appFee: name === "appFee" ? Number(finalValue) : Number(values.appFee || 0),
         fee: name === "fee" ? Number(finalValue) : Number(values.fee || 0),
-        additionalCourseFee: name === "additionalCourseFee" ? Number(finalValue) : Number(values.additionalCourseFee || 0),
+        additionalOrientationFee: name === "additionalOrientationFee" ? Number(finalValue) : Number(values.additionalOrientationFee || 0),
       };
-      const total = fees.appFee + fees.fee + fees.additionalCourseFee;
+      const total = fees.appFee + fees.fee + fees.additionalOrientationFee;
       setFieldValue("totalFee", total.toString());
       setFieldTouched("totalFee", true);
     }
@@ -1003,7 +1091,7 @@ const GeneralInfoSection = ({
   const handleProceed = async () => {
     const errors = await validateForm();
     console.log("Validation errors:", JSON.stringify(errors, null, 2)); // Log detailed errors for debugging
-    
+   
     // Log complete form data object
     console.log("🚀 ===== FINAL SUBMITTING OBJECT =====");
     console.log("📋 Complete Form Data:", JSON.stringify(values, null, 2));
@@ -1018,7 +1106,7 @@ const GeneralInfoSection = ({
       console.log(`  ${key}:`, value);
     });
     console.log("🚀 ===== END SUBMITTING OBJECT =====");
-    
+   
     if (Object.keys(errors).length === 0) {
       console.log("Validation passed, moving to next step");
       // Clear persistent errors when validation passes
@@ -1037,9 +1125,6 @@ const GeneralInfoSection = ({
       setFormikTouched(errors);
       // Set persistent errors for fields that have validation errors
       setPersistentErrors(errors);
-      alert("Please correct the following errors:\n" + Object.entries(errors)
-        .map(([field, error]) => `${field}: ${error}`)
-        .join("\n"));
     }
   };
 
@@ -1059,6 +1144,25 @@ const GeneralInfoSection = ({
         return (touchedValue && errorValue) || persistentError;
       }
     }
+   
+    // Special handling for additional orientation fee - show error if it exceeds limit
+    if (fieldName === "additionalOrientationFee") {
+      return getAdditionalOrientationFeeError() !== null || (touched[fieldName] && errors[fieldName]) || persistentErrors[fieldName];
+    }
+   
+    // Debug logging for joinedCampus field
+    if (fieldName === "joinedCampus") {
+      console.log("🔍 joinedCampus validation debug:", {
+        fieldName,
+        touched: touched[fieldName],
+        error: errors[fieldName],
+        persistentError: persistentErrors[fieldName],
+        shouldShow: (touched[fieldName] && errors[fieldName]) || persistentErrors[fieldName],
+        currentValue: values[fieldName],
+        allErrors: errors
+      });
+    }
+   
     // Show error if field is touched and has error, OR if it has a persistent error
     return (touched[fieldName] && errors[fieldName]) || persistentErrors[fieldName];
   };
@@ -1073,6 +1177,15 @@ const GeneralInfoSection = ({
         return errors.siblingInformation?.[index]?.[field] || persistentErrors[fieldName];
       }
     }
+   
+    // Special handling for additional orientation fee - return custom error message
+    if (fieldName === "additionalOrientationFee") {
+      const customError = getAdditionalOrientationFeeError();
+      if (customError) {
+        return customError;
+      }
+    }
+   
     return errors[fieldName] || persistentErrors[fieldName];
   };
 
@@ -1163,7 +1276,7 @@ const GeneralInfoSection = ({
               };
 
               const isDropdownLoading = getLoadingState(field.name);
-              
+             
               // Debug logging for dropdown rendering
               if (field.name === "joiningClassName" || field.name === "orientationName" || field.name === "orientationBatch" || field.name === "schoolState" || field.name === "schoolDistrict") {
                 console.log(`🔍 Rendering dropdown for ${field.name}:`, {
@@ -1177,7 +1290,7 @@ const GeneralInfoSection = ({
                   fieldName: field.name,
                   fieldLabel: field.label
                 });
-                
+               
                 // Special debugging for school district dropdown
                 if (field.name === "schoolDistrict") {
                   console.log("🔍 School District Dropdown Details:", {
@@ -1190,7 +1303,7 @@ const GeneralInfoSection = ({
                     fieldType: field.type,
                     fieldRequired: field.required
                   });
-                  
+                 
                   // Check if dropdown should be disabled
                   if (isDropdownLoading) {
                     console.log("⚠️ School District dropdown is DISABLED due to loading state");
@@ -1201,7 +1314,7 @@ const GeneralInfoSection = ({
                   }
                 }
               }
-              
+             
               return (
                 <div key={index} className={styles.General_Info_Section_general_form_field}>
                   <Dropdown
@@ -1238,22 +1351,22 @@ const GeneralInfoSection = ({
                         <input
                           type="radio"
                           name={field.name}
-                          value={option}
-                          checked={values[field.name] === option}
+                          value={option.value}
+                          checked={values[field.name] === option.value}
                           onChange={() => {
-                            setFieldValue(field.name, option);
+                            setFieldValue(field.name, option.value);
                             setFieldTouched(field.name, true);
                           }}
                           className={styles.General_Info_Section_general_category_radio}
                         />
-                        <span className={`${styles.General_Info_Section_general_category_label} ${values[field.name] === option ? styles.General_Info_Section_general_category_active : ""}`} onClick={() => {
-                          setFieldValue(field.name, option);
+                        <span className={`${styles.General_Info_Section_general_category_label} ${values[field.name] === option.value ? styles.General_Info_Section_general_category_active : ""}`} onClick={() => {
+                          setFieldValue(field.name, option.value);
                           setFieldTouched(field.name, true);
                         }}>
                           <span className={styles.General_Info_Section_general_category_text_with_icon}>
-                            {option === "SSC" && <figure className={styles.General_Info_Section_general_category_icon}><img src={CashIcon} alt="cash-icon" style={{ width: "18px", height: "18px" }} /></figure>}
-                            {option === "Other" && <figure className={styles.General_Info_Section_general_category_icon}><img src={DDIcon} alt="dd-icon" style={{ width: "18px", height: "18px" }} /></figure>}
-                            {option}
+                            {option.label === "SSC" && <figure className={styles.General_Info_Section_general_category_icon}><img src={CashIcon} alt="cash-icon" style={{ width: "18px", height: "18px" }} /></figure>}
+                            {option.label === "Other" && <figure className={styles.General_Info_Section_general_category_icon}><img src={DDIcon} alt="dd-icon" style={{ width: "18px", height: "18px" }} /></figure>}
+                            {option.label}
                           </span>
                         </span>
                       </label>
@@ -1633,7 +1746,7 @@ const GeneralInfoSection = ({
             onClick={async (e) => {
               e.preventDefault();
               const errors = await validateForm();
-              
+             
               // Log complete form data object for skip to payments
               console.log("🚀 ===== SKIP TO PAYMENTS - FINAL SUBMITTING OBJECT =====");
               console.log("📋 Complete Form Data:", JSON.stringify(values, null, 2));
@@ -1648,18 +1761,12 @@ const GeneralInfoSection = ({
                 console.log(`  ${key}:`, value);
               });
               console.log("🚀 ===== END SKIP TO PAYMENTS OBJECT =====");
-              
+             
               if (Object.keys(errors).length === 0) {
                 setActiveStep && setActiveStep(3);
               } else {
                 setErrors(errors);
                 setFormikTouched(errors);
-                alert(
-                  "Please correct the following errors before proceeding to payments:\n" +
-                    Object.entries(errors)
-                      .map(([field, error]) => `${field}: ${error}`)
-                      .join("\n")
-                );
               }
             }}
           >

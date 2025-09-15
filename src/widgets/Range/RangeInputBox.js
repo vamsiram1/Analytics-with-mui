@@ -83,7 +83,7 @@ const RangeInputBox = ({ field, form, label }) => {
           onClick={handleRangeClicked}
           aria-label="Toggle range options"
         >
-          <span className={styles.range_input_icon}>{updownicon}</span>
+          {/* <span className={styles.range_input_icon}>{updownicon}</span> */}
         </button>
       </div>
 
