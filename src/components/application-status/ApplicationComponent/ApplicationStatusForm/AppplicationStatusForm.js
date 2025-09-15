@@ -14,7 +14,7 @@ import Damaged from "../../Damaged/Damaged";
 import SuccessPage from "../../ConformationPage/SuccessPage";
 import StatusHeader from "../../Conformation/StatusHeader/StatusHeader";
 import apiService from "../../../../queries/application-status/SaleFormapis";
-import backButton from "../../../../assets/application-status/Backarrow.svg";
+import backButton from "../../../../assets/application-status/BakArrow.svg";
 import * as Yup from "yup";
 import styles from "./ApplicationStatusForm.module.css";
 
@@ -29,7 +29,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const locationInitialValues = (location && location.state && location.state.initialValues) ? location.state.initialValues : {};
-  
+ 
   // Debug logging for location state
   console.log("📍 Location state data:", {
     hasLocation: !!location,
@@ -61,7 +61,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
   const fieldMapping = {
     // Basic student information
     'studentName': 'studentName',
-    'surname': 'surname', 
+    'surname': 'surname',
     'htNo': 'htNo',
     'aadhaar': 'aadharCardNo',
     'applicationNo': 'studAdmsNo',
@@ -96,7 +96,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     'proId': 'proId',
     'createdBy': 'createdBy',
     'dateOfJoin': 'dateOfJoin',
-    
+   
     // Parent information
     'fatherName': 'parents[0].name',
     'fatherOccupation': 'parents[0].occupation',
@@ -107,7 +107,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     'motherPhoneNumber': 'parents[1].mobileNo',
     'motherEmail': 'parents[1].email',
     'relationType': 'parents[0].relationTypeId', // Father relation type
-    
+   
     // Address information
     'doorNo': 'addressDetails.doorNo',
     'street': 'addressDetails.street',
@@ -118,7 +118,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     'district': 'addressDetails.districtId',
     'pincode': 'addressDetails.pincode',
     'state': 'addressDetails.stateId',
-    
+   
     // Sibling information
     'siblingInformation': 'siblings',
     'fullName': 'siblings[].fullName',
@@ -126,7 +126,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     'classId': 'siblings[].classId',
     'relationTypeId': 'siblings[].relationTypeId',
     'genderId': 'siblings[].genderId',
-    
+   
     // Payment information
     'appFeeAmount': 'paymentDetails.applicationFeeAmount',
     'appFeeReceiptNo': 'paymentDetails.prePrintedReceiptNo',
@@ -139,7 +139,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     'organizationId': 'paymentDetails.organizationId',
     'orgBankId': 'paymentDetails.orgBankId',
     'orgBankBranchId': 'paymentDetails.orgBankBranchId',
-    
+   
     // Concession information
     'concessionIssuedBy': 'studentConcessionDetails.concessionIssuedBy',
     'concessionAuthorisedBy': 'studentConcessionDetails.concessionAuthorisedBy',
@@ -149,7 +149,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     'yearConcession2nd': 'studentConcessionDetails.concessions[1].amount',
     'yearConcession3rd': 'studentConcessionDetails.concessions[2].amount',
     'concessions': 'studentConcessionDetails.concessions',
-    
+   
     // PRO concession
     'proConcessionAmount': 'proConcessionDetails.concessionAmount',
     'proReason': 'proConcessionDetails.reason',
@@ -354,7 +354,156 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
         stateId: safeParseInt(formData.state) || safeParseInt(formData.stateId) || 1,
         createdBy: formData.createdBy || 2
       },
-      siblings: formData.siblingInformation || [],
+      siblings: (() => {
+        console.log("🔍 Original siblingInformation:", formData.siblingInformation);
+        console.log("🔍 Sibling class values:", formData.siblingInformation?.map((s, i) => ({
+          index: i,
+          class: s.class,
+          classId: s.classId,
+          fullName: s.fullName,
+          relationType: s.relationType,
+          gender: s.gender
+        })));
+       
+        // Debug dropdown options availability
+        console.log("🔍 Dropdown options check:", {
+          hasDropdownOptions: !!formData.dropdownOptions,
+          hasAllStudentClasses: !!formData.dropdownOptions?.allStudentClasses,
+          allStudentClassesLength: formData.dropdownOptions?.allStudentClasses?.length || 0,
+          allStudentClasses: formData.dropdownOptions?.allStudentClasses?.slice(0, 3) || [],
+          formDataKeys: Object.keys(formData).filter(key => key.includes('dropdown') || key.includes('Options'))
+        });
+       
+        const filteredSiblings = (formData.siblingInformation || [])
+          .filter(sibling => {
+            // Check if sibling object exists and has required fields
+            if (!sibling || typeof sibling !== 'object') {
+              console.log(`🔍 Filtering out invalid sibling object:`, sibling);
+              return false;
+            }
+           
+            // Only include siblings that have at least a name filled
+            const hasName = sibling.fullName && sibling.fullName.trim() !== "";
+            console.log(`🔍 Filtering sibling:`, { sibling, hasName });
+            return hasName;
+          });
+       
+        console.log("🔍 Filtered siblings:", filteredSiblings);
+       
+        const transformedSiblings = filteredSiblings.map((sibling, index) => {
+          // Additional validation to ensure required fields are present
+          if (!sibling.fullName || sibling.fullName.trim() === "") {
+            console.warn(`⚠️ Skipping sibling ${index} - no name provided:`, sibling);
+            return null;
+          }
+         
+          // Try to get a valid class ID from dropdown options if sibling.class is not available
+          let classId = safeParseInt(sibling.class) || safeParseInt(sibling.classId);
+          if (!classId && formData.dropdownOptions?.allStudentClasses?.length > 0) {
+            // Use the first available class as fallback instead of hardcoded 1
+            classId = formData.dropdownOptions.allStudentClasses[0].id;
+            console.log(`🔍 Using fallback class ID from dropdown options: ${classId}`);
+          }
+          if (!classId) {
+            classId = 1; // Final fallback
+            console.log(`🔍 Using hardcoded fallback class ID: ${classId}`);
+          }
+         
+          const transformedSibling = {
+            fullName: sibling.fullName.trim(),
+            schoolName: sibling.schoolName?.trim() || "",
+            classId: classId,
+            relationTypeId: sibling.relationType || sibling.relationTypeId || 1,
+            genderId: safeParseInt(sibling.gender) || safeParseInt(sibling.genderId) || 1,
+            createdBy: formData.createdBy || 2
+          };
+         
+          // Debug logging for class ID
+          console.log(`🔍 Sibling ${index} class mapping:`, {
+            originalClass: sibling.class,
+            originalClassId: sibling.classId,
+            parsedClassId: safeParseInt(sibling.class),
+            finalClassId: transformedSibling.classId,
+            isClassEmpty: !sibling.class || sibling.class === "",
+            isClassIdEmpty: !sibling.classId || sibling.classId === "",
+            classType: typeof sibling.class,
+            classIdType: typeof sibling.classId,
+            siblingObject: sibling
+          });
+         
+          // Debug logging for sibling transformation
+          console.log(`🔍 Sibling ${index} transformation:`, {
+            original: sibling,
+            transformed: transformedSibling
+          });
+         
+          return transformedSibling;
+        }).filter(sibling => sibling !== null); // Remove any null entries
+       
+        console.log("🔍 Final transformed siblings:", transformedSiblings);
+       
+        // Final safety check - ensure no empty or invalid siblings are sent
+        const finalSiblings = transformedSiblings.filter(sibling => {
+          const isValid = sibling &&
+                         sibling.fullName &&
+                         sibling.fullName.trim() !== "" &&
+                         sibling.genderId &&
+                         sibling.classId &&
+                         sibling.relationTypeId;
+         
+          if (!isValid) {
+            console.warn("🔍 Removing invalid sibling from final array:", sibling);
+          }
+         
+          return isValid;
+        });
+       
+        console.log("🔍 Final validated siblings:", finalSiblings);
+        console.log("🔍 Final siblings JSON:", JSON.stringify(finalSiblings, null, 2));
+       
+        // If no valid siblings, return empty array to avoid sending empty objects
+        if (finalSiblings.length === 0) {
+          console.log("🔍 No valid siblings found, sending empty array");
+          return [];
+        }
+       
+        // Additional validation - ensure each sibling has all required fields
+        const validatedSiblings = finalSiblings.map((sibling, index) => {
+          const validated = {
+            fullName: String(sibling.fullName || "").trim(),
+            schoolName: String(sibling.schoolName || "").trim(),
+            classId: Number(sibling.classId) || 1,
+            relationTypeId: Number(sibling.relationTypeId) || 1,
+            genderId: Number(sibling.genderId) || 1,
+            createdBy: Number(sibling.createdBy) || 2
+          };
+         
+          console.log(`🔍 Validated sibling ${index}:`, validated);
+          return validated;
+        });
+       
+        console.log("🔍 Final validated siblings for backend:", validatedSiblings);
+       
+        // Additional check - ensure we're not sending empty arrays
+        if (validatedSiblings.length === 0) {
+          console.log("🔍 No siblings to send, returning empty array");
+          return [];
+        }
+       
+        // Log each sibling individually to ensure they're valid
+        validatedSiblings.forEach((sibling, index) => {
+          console.log(`🔍 Sibling ${index} validation:`, {
+            hasName: !!sibling.fullName,
+            hasSchool: !!sibling.schoolName,
+            hasClassId: !!sibling.classId,
+            hasGenderId: !!sibling.genderId,
+            hasRelationType: !!sibling.relationTypeId,
+            sibling: sibling
+          });
+        });
+       
+        return validatedSiblings;
+      })(),
       studentConcessionDetails: {
         concessionIssuedBy: safeParseInt(formData.givenById) || safeParseInt(formData.concessionIssuedBy) || 1,
         concessionAuthorisedBy: safeParseInt(formData.authorizedById) || safeParseInt(formData.concessionAuthorisedBy) || 1,
@@ -400,12 +549,12 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     };
 
     console.log("🔄 Transformed form data to API format:", apiData);
-    
+   
     // Display formatted object in console UI
     console.log("📋 ===== API OBJECT STRUCTURE =====");
     console.log(JSON.stringify(apiData, null, 2));
     console.log("📋 ===== END API OBJECT =====");
-    
+   
     // Display detailed object structure
     console.log("🔍 ===== DETAILED API OBJECT =====");
     console.log("📝 Basic Information:");
@@ -418,7 +567,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     console.log(`  createdBy: ${apiData.createdBy}`);
     console.log(`  aadharCardNo: ${apiData.aadharCardNo}`);
     console.log(`  dob: "${apiData.dob}"`);
-    
+   
     console.log("📝 Academic Information:");
     console.log(`  religionId: ${apiData.religionId}`);
     console.log(`  casteId: ${apiData.casteId}`);
@@ -430,7 +579,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     console.log(`  admissionReferredBy: "${apiData.admissionReferredBy}"`);
     console.log(`  scoreAppNo: "${apiData.scoreAppNo}"`);
     console.log(`  marks: ${apiData.marks}`);
-    
+   
     console.log("📝 Orientation Information:");
     console.log(`  orientationDate: "${apiData.orientationDate}"`);
     console.log(`  appSaleDate: "${apiData.appSaleDate}"`);
@@ -448,7 +597,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     console.log(`  proId: ${apiData.proId}`);
     console.log(`  orientationBatchId: ${apiData.orientationBatchId}`);
     console.log(`  bloodGroupId: ${apiData.bloodGroupId}`);
-    
+   
     console.log("👨‍👩‍👧‍👦 Parents Information:");
     apiData.parents.forEach((parent, index) => {
       console.log(`  Parent ${index + 1}:`);
@@ -458,7 +607,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
       console.log(`    mobileNo: ${parent.mobileNo}`);
       console.log(`    email: "${parent.email}"`);
     });
-    
+   
     console.log("🏠 Address Details:");
     console.log(`  doorNo: "${apiData.addressDetails.doorNo}"`);
     console.log(`  street: "${apiData.addressDetails.street}"`);
@@ -470,7 +619,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     console.log(`  pincode: ${apiData.addressDetails.pincode}`);
     console.log(`  stateId: ${apiData.addressDetails.stateId}`);
     console.log(`  createdBy: ${apiData.addressDetails.createdBy}`);
-    
+   
     console.log("👶 Siblings Information:");
     apiData.siblings.forEach((sibling, index) => {
       console.log(`  Sibling ${index + 1}:`);
@@ -481,7 +630,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
       console.log(`    genderId: ${sibling.genderId}`);
       console.log(`    createdBy: ${sibling.createdBy}`);
     });
-    
+   
     console.log("💰 Student Concession Details:");
     console.log(`  concessionIssuedBy: ${apiData.studentConcessionDetails.concessionIssuedBy}`);
     console.log(`  concessionAuthorisedBy: ${apiData.studentConcessionDetails.concessionAuthorisedBy}`);
@@ -494,13 +643,13 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
       console.log(`      concTypeId: ${concession.concTypeId}`);
       console.log(`      amount: ${concession.amount}`);
     });
-    
+   
     console.log("💼 PRO Concession Details:");
     console.log(`  concessionAmount: ${apiData.proConcessionDetails.concessionAmount}`);
     console.log(`  reason: "${apiData.proConcessionDetails.reason}"`);
     console.log(`  proEmployeeId: ${apiData.proConcessionDetails.proEmployeeId}`);
     console.log(`  created_by: ${apiData.proConcessionDetails.created_by}`);
-    
+   
     console.log("💳 Payment Details:");
     console.log(`  applicationFeeAmount: ${apiData.paymentDetails.applicationFeeAmount}`);
     console.log(`  prePrintedReceiptNo: "${apiData.paymentDetails.prePrintedReceiptNo}"`);
@@ -515,9 +664,9 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
     console.log(`  orgBankBranchId: ${apiData.paymentDetails.orgBankBranchId}`);
     console.log(`  organizationId: ${apiData.paymentDetails.organizationId}`);
     console.log(`  created_by: ${apiData.paymentDetails.created_by}`);
-    
+   
     console.log("🔍 ===== END DETAILED API OBJECT =====");
-    
+   
     return apiData;
   };
 
@@ -529,8 +678,9 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
         ...initialData,
         ...applicationData, // Include fetched application data
         htNo:
-          applicationData?.htNo ||
-          (locationInitialValues && locationInitialValues.htNo) ||
+          applicationData?.applicationNo ||
+          (locationInitialValues && locationInitialValues.applicationNo) ||
+          initialData.applicationNo ||
           initialData.htNo ||
           "",
         joinedCampus:
@@ -570,10 +720,10 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
           initialData.district ||
           "",
       };
-      console.log("Initial values calculated:", { 
-        applicationData, 
-        locationInitialValues, 
-        initialData, 
+      console.log("Initial values calculated:", {
+        applicationData,
+        locationInitialValues,
+        initialData,
         calculatedValues: {
           htNo: values.htNo,
           joinedCampus: values.joinedCampus,
@@ -931,7 +1081,7 @@ const ApplicationStatusForm = ({ onBack, initialData = {} }) => {
                   joinedCampus: initialValues.joinedCampus
                 }
               });
-              
+             
               navigate(`/application/${appNo}/${pathSegment}`, {
                 state: {
                   initialValues: currentData,

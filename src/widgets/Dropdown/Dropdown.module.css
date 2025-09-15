@@ -34,7 +34,7 @@
 /* ===== NEW container for popup: keeps the header fixed and list scrollable ===== */
 .dropdown_panel {
   position: absolute;
-  z-index: 1;
+  z-index: 2;
   width: 100%;
   top: 62px;
   left: 0;

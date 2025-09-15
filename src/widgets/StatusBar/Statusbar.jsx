@@ -1,16 +1,38 @@
 import React from "react";
 import styles from "./Statusbar.module.css";
-
-const Statusbar = ({ isSold, isConfirmed, showLabels = true, reducedGap = false, labelWidth = "100%" }) => {
+ 
+const Statusbar = ({ isSold, isConfirmed, isDamaged, showLabels = true, reducedGap = false, labelWidth = "100%" }) => {
   const blue = "#3425FF";
   const red = "#FF2525";
-
+ 
+  // If damaged, show special damaged status bar
+  if (isDamaged) {
+    return (
+      <div className={styles.status_container}>
+        <div className={styles.status_bar}>
+          <div className={styles.status_icon}>
+            <Star color={red}><Cross /></Star>
+          </div>
+        </div>
+        {showLabels && (
+          <div className={styles.status_labels} style={{ width: labelWidth }}>
+            <div className={styles.label_container}>
+              <span className={styles.label_damaged}>
+                Damaged
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+ 
   // If confirmed => sold is automatically true
   const finalSold = isConfirmed ? true : isSold;
-
+ 
   const soldColor = finalSold ? blue : red;
   const confirmedColor = isConfirmed ? blue : red;
-
+ 
   return (
     <div className={styles.status_container}>
       <div className={`${styles.status_bar} ${reducedGap ? styles.status_bar_reduced : ''}`}>
@@ -25,7 +47,7 @@ const Statusbar = ({ isSold, isConfirmed, showLabels = true, reducedGap = false,
         </div>
       </div>
       {showLabels && (
-        <div 
+        <div
           className={`${styles.status_labels} ${reducedGap ? styles.status_labels_reduced : ''}`}
           style={{ width: labelWidth }}
         >
@@ -52,7 +74,7 @@ const Statusbar = ({ isSold, isConfirmed, showLabels = true, reducedGap = false,
     </div>
   );
 };
-
+ 
 // ---- SVG Components ----
 const Star = ({ color, children }) => (
   <svg
@@ -70,13 +92,13 @@ const Star = ({ color, children }) => (
     <g transform="translate(6,6)">{children}</g>
   </svg>
 );
-
+ 
 const Line = ({ color }) => (
   <svg width="63" height="20" viewBox="0 0 63 20" fill="none">
     <line x1="0" y1="10" x2="63" y2="10" stroke={color} strokeWidth="2" />
   </svg>
 );
-
+ 
 const Tick = () => (
   <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
     <path
@@ -88,12 +110,12 @@ const Tick = () => (
     />
   </svg>
 );
-
+ 
 const Cross = () => (
   <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
     <line x1="2" y1="2" x2="6" y2="6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
     <line x1="6" y1="2" x2="2" y2="6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 );
-
+ 
 export default Statusbar;

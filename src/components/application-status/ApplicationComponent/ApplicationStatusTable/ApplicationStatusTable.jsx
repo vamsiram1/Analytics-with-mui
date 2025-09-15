@@ -131,7 +131,7 @@ const ApplicationStatusTable = ({ filteredData, setData, pageIndex, setPageIndex
     const rowObj = unwrapRow(row);
     const id = extractId(rowObj);
     if (id != null) {
-      navigate(`/application/${id}/confirmation`, {
+      navigate(`/application/status/${id}/confirmation`, {
         state: { 
           initialValues: {
             applicationNo: rowObj.applicationNo || "",
@@ -158,7 +158,7 @@ const ApplicationStatusTable = ({ filteredData, setData, pageIndex, setPageIndex
     const rowObj = unwrapRow(row);
     const id = extractId(rowObj);
     if (id != null) {
-      navigate(`/application/${id}/damaged`, {
+      navigate(`/application/status/${id}/damaged`, {
         state: { 
           initialValues: {
             applicationNo: rowObj.applicationNo || "",

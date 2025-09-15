@@ -1,5 +1,5 @@
 .Student_Information_studentInfoContainer {
-  width: 100%;
+  /* width: 100%; */
   margin: 0 auto;
   background-color: #fff;
   border-radius: 8px;
@@ -22,7 +22,8 @@
  
 .Student_Information_studentTextHeader {
   display: flex;
-  gap: 222px;
+  /* gap: 222px; */
+  justify-content: space-between;
   flex-wrap: wrap;
 }
  

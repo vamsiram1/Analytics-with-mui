@@ -38,6 +38,7 @@
 .stepper_step_label {
   font-weight: 400;
   font-size: 16px;
+  white-space: nowrap;
 }
 
 .active {
